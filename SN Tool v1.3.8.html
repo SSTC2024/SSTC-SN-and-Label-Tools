@@ -452,7 +452,7 @@
 				const usableWidth = pageWidth - 2 * margin;
 				const cols = Math.floor(usableWidth / a4CellWidth); // 6 for A4, 8 for A3
 				
-				const rows = isA3 ? 43 : 28;
+				const rows = isA3 ? 42 : 28;
 				const scale = highRes ? 4 : 2;
 				
 				const totalPerPage = cols * rows;
@@ -522,6 +522,7 @@
 					const barcodeHeight = cellHeight * 0.35; // Reduced from 0.5 (30% reduction)
 					
 					// Add barcodes and serial numbers
+					const topOffset = 2; // 2mm space between top grid line and first barcode
 					for (let i = startIdx; i < endIdx; i++) {
 						const localIdx = i - startIdx;
 						const row = Math.floor(localIdx / cols);
@@ -532,7 +533,7 @@
 						const barcodeAndTextHeight = barcodeHeight + 2.5 + 1.94; // barcode + gap + text height
 						const lineGap = 1.5; // Gap between serial number and next barcode
 						const totalRowHeight = barcodeAndTextHeight + lineGap;
-						const y = contentTop + row * totalRowHeight;
+						const y = contentTop + topOffset + row * totalRowHeight;
 						
 						// Create and add barcode
 						const barcodeImage = createBarcodeImage(data.serialNumbers[i], 'barcodeCanvasSN', scale);
@@ -560,18 +561,18 @@
 
 					// Lines between rows (in the middle)
 					for (let row = 0; row < actualRows - 1; row++) {
-						const gridY = contentTop + (row + 1) * totalRowHeight - lineGap / 1;
+						const gridY = contentTop + topOffset + (row + 1) * totalRowHeight - lineGap / 1;
 						pdf.line(margin, gridY, pageWidth - margin, gridY);
 					}
 
 					// Last line at the bottom
-					const lastY = contentTop + actualRows * totalRowHeight;
+					const lastY = contentTop + topOffset + actualRows * totalRowHeight;
 					pdf.line(margin, lastY, pageWidth - margin, lastY);
 
 					// Draw vertical lines
 					for (let col = 0; col <= cols; col++) {
 						const x = margin + col * cellWidth;
-						const bottomY = contentTop + actualRows * totalRowHeight;
+						const bottomY = contentTop + topOffset + actualRows * totalRowHeight;
 						pdf.line(x, contentTop, x, bottomY);
 					}
 
