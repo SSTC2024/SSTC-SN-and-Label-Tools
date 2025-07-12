@@ -524,6 +524,34 @@
 						pdf.setFontSize(5.5); // Reduced from 8 (30% smaller)
 						pdf.text(data.serialNumbers[i], x, y + barcodeHeight + 2.5); // Tighter spacing
 					}
+					// ========== ADD GRID LINES HERE ==========
+					// Add grid lines for die cutting
+					pdf.setDrawColor(200, 200, 200); // Light gray color
+					pdf.setLineWidth(0.1); // Thin line
+
+					// Draw horizontal lines
+					for (let row = 0; row <= rows; row++) {
+						const y = contentTop + row * totalRowHeight; // Use totalRowHeight instead of cellHeight
+						if (row === rows && endIdx - startIdx < totalPerPage) {
+							const lastRow = Math.ceil((endIdx - startIdx) / cols);
+							if (row > lastRow) break;
+						}
+						pdf.line(margin, y, pageWidth - margin, y);
+					}
+
+					// Draw vertical lines
+					for (let col = 0; col <= cols; col++) {
+						const x = margin + col * cellWidth;
+						const actualRows = Math.ceil((endIdx - startIdx) / cols);
+						const bottomY = contentTop + actualRows * totalRowHeight; // Use totalRowHeight
+						pdf.line(x, contentTop, x, bottomY);
+					}
+
+					// Reset draw color
+					pdf.setDrawColor(0, 0, 0);
+					// ========== END OF GRID LINES ==========
+
+					} // This closes the page loop
 				}
 				
 				// Generate filename with date
@@ -762,34 +790,6 @@
                 pdf.setFontSize(5.5); // Slightly increased from 5
                 pdf.text(pageData.serialNumbers[i], x, y + barcodeHeight + 2); // Original spacing to prevent overlap
             }
-			
-			// ========== ADD GRID LINES FOR DIE CUTTING ==========
-			// Add grid lines for die cutting
-			pdf.setDrawColor(200, 200, 200); // Light gray color
-			pdf.setLineWidth(0.1); // Thin line
-
-			// Draw horizontal lines
-			for (let row = 0; row <= rows; row++) {
-				const y = contentTop + row * cellHeight;
-				if (row === rows && endIdx - startIdx < totalPerPage) {
-					const lastRow = Math.ceil((endIdx - startIdx) / cols);
-					if (row > lastRow) break;
-				}
-				pdf.line(margin, y, pageWidth - margin, y);
-			}
-
-			// Draw vertical lines
-			for (let col = 0; col <= cols; col++) {
-				const x = margin + col * cellWidth;
-				const actualRows = Math.ceil((endIdx - startIdx) / cols);
-				const bottomY = contentTop + actualRows * cellHeight;
-				pdf.line(x, contentTop, x, bottomY);
-			}
-
-			// Reset draw color
-			pdf.setDrawColor(0, 0, 0);
-			// ========== END OF GRID LINES ==========
-													
         }
 
         // Print PDF
