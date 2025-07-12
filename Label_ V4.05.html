@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSTC Label Generator v4.05 - Template Based</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .file-upload-group {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            background-color: #f0f8ff;
+        }
+        
+        .file-upload-group input[type="file"] {
+            margin-top: 10px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .preview-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        #preview-canvas {
+            border: 1px solid #ddd;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .info-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .info-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SSTC Label Generator v4.05</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            Generate professional labels with dimensions 40mm × 15mm<br>
+            <small>Upload SSTC logo below for best results</small>
+        </p>
+        
+        <div class="form-section">
+            <h2>Product Information</h2>
+            
+            <div class="form-group">
+                <label for="productType">Product Type:</label>
+                <input type="text" id="productType" placeholder="DESKTOP MEMORY" value="DESKTOP MEMORY">
+            </div>
+            
+            <div class="form-group">
+                <label for="productName">Product Specifications:</label>
+                <input type="text" id="productName" placeholder="DDR4 3200Mhz (Jedec) 1.2V" value="DDR4 3200Mhz (Jedec) 1.2V">
+            </div>
+            
+            <div class="form-group">
+                <label for="model">Model:</label>
+                <input type="text" id="model" placeholder="U3200I-C22" value="U3200I-C22">
+            </div>
+            
+            <div class="form-group">
+                <label for="serialNumber">Serial Number:</label>
+                <input type="text" id="serialNumber" placeholder="TM250605001" value="TM250605001">
+            </div>
+            
+            <div class="form-group">
+                <label for="capacity">Capacity:</label>
+                <input type="text" id="capacity" placeholder="16GB" value="16GB">
+            </div>
+            
+            <div class="form-group">
+                <label for="sku">SKU:</label>
+                <input type="text" id="sku" placeholder="U3200I-C22-16G" value="U3200I-C22-16G">
+            </div>
+            
+            <div class="form-group">
+                <label for="cartonNumber">Carton Number:</label>
+                <input type="text" id="cartonNumber" placeholder="1" value="1">
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Upload Files</h2>
+            
+            <div class="file-upload-group">
+                <label>Upload Serial Numbers (Excel file):</label>
+                <input type="file" id="serialFile" accept=".xlsx,.xls">
+                <p style="margin-top: 10px; color: #666;">Upload an Excel file with serial numbers in a column. The tool will create one label per serial number.</p>
+                <p id="serialCount" style="margin-top: 5px; color: #28a745; font-weight: bold;"></p>
+            </div>
+            
+            <div class="file-upload-group">
+                <label>Upload QR Code Links (Excel file):</label>
+                <input type="file" id="barcodeFile" accept=".xlsx,.xls">
+                <p style="margin-top: 10px; color: #666;">Upload an Excel file with URLs in a column. The tool will generate QR codes from these links.</p>
+                <p id="qrCount" style="margin-top: 5px; color: #28a745; font-weight: bold;"></p>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Page Format</h2>
+            <div class="form-group">
+                <label for="pageFormat">Select Page Format:</label>
+                <select id="pageFormat">
+                    <option value="a4">A4</option>
+                    <option value="a3">A3</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="showGridLines" style="width: auto; margin-right: 10px;">
+                    Show cutting grid lines (for easier label separation)
+                </label>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="previewLabels()">Preview Labels</button>
+            <button class="btn btn-success" onclick="generatePDF()">Generate PDF</button>
+        </div>
+        
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <h2>Label Preview</h2>
+            <canvas id="preview-canvas"></canvas>
+        </div>
+        
+        <div id="message-container"></div>
+    </div>
+
+    <!-- Include required libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    
+    <script>
+        let serialNumbers = [];
+        let qrLinks = [];
+        let sstcLogoImg = null;
+        
+        // Load SSTC logo
+        const sstcLogo = new Image();
+        sstcLogo.onload = function() {
+            sstcLogoImg = this;
+        };
+        sstcLogo.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='; // Placeholder - replace with actual image
+        
+        window.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('serialCount').textContent = '';
+            document.getElementById('qrCount').textContent = '';
+            
+            // Add file inputs for logo images
+            const logoSection = document.createElement('div');
+            logoSection.className = 'form-section';
+            logoSection.innerHTML = `
+                <h2>Logo Images</h2>
+                <div class="form-group">
+                    <label>Upload SSTC Logo:</label>
+                    <input type="file" id="sstcLogoFile" accept="image/*">
+                    <p style="margin-top: 5px; color: #666;">Logo will be resized to 13mm × 3mm</p>
+                </div>
+            `;
+            
+            // Insert after the first form section
+            const firstSection = document.querySelector('.form-section');
+            firstSection.parentNode.insertBefore(logoSection, firstSection.nextSibling);
+            
+            // Handle logo uploads
+            document.getElementById('sstcLogoFile').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        sstcLogo.src = e.target.result;
+                        showMessage('SSTC logo loaded successfully', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+        
+        // Handle serial number file upload
+        document.getElementById('serialFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                    
+                    serialNumbers = [];
+                    for (let i = 0; i < jsonData.length; i++) {
+                        if (jsonData[i][0]) {
+                            serialNumbers.push(jsonData[i][0].toString());
+                        }
+                    }
+                    
+                    showMessage(`Loaded ${serialNumbers.length} serial numbers`, 'success');
+                    document.getElementById('serialCount').textContent = `${serialNumbers.length} serial numbers loaded`;
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+        
+        // Handle barcode file upload
+        document.getElementById('barcodeFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                    
+                    qrLinks = [];
+                    for (let i = 0; i < jsonData.length; i++) {
+                        if (jsonData[i][0]) {
+                            qrLinks.push(jsonData[i][0].toString());
+                        }
+                    }
+                    
+                    showMessage(`Loaded ${qrLinks.length} QR code links`, 'success');
+                    document.getElementById('qrCount').textContent = `${qrLinks.length} QR code links loaded`;
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+        
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="info-message ${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 3000);
+        }
+        
+        function previewLabels() {
+            const previewSection = document.getElementById('previewSection');
+            previewSection.style.display = 'block';
+            
+            const canvas = document.getElementById('preview-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Label dimensions in pixels (40mm x 15mm at 300 DPI)
+            const labelWidth = 472; // 40mm at 300 DPI
+            const labelHeight = 177; // 15mm at 300 DPI
+            
+            canvas.width = labelWidth;
+            canvas.height = labelHeight;
+            
+            drawLabel(ctx, 0, 0, labelWidth, labelHeight, getFormData(), 0);
+        }
+        
+        function getFormData() {
+            return {
+                productType: document.getElementById('productType').value,
+                productName: document.getElementById('productName').value,
+                model: document.getElementById('model').value,
+                serialNumber: document.getElementById('serialNumber').value,
+                sku: document.getElementById('sku').value,
+                capacity: document.getElementById('capacity').value,
+                cartonNumber: document.getElementById('cartonNumber').value
+            };
+        }
+        
+        function drawLabel(ctx, x, y, width, height, data, index) {
+            // Clear background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(x, y, width, height);
+            
+            // Draw BLACK border around entire label with 0.2 width
+            ctx.strokeStyle = '#000000'; // Changed from #0066cc to black
+            ctx.lineWidth = 0.2 * 11.8; // Convert 0.2mm to pixels at 300 DPI (0.2 * 11.8 = 2.36 pixels)
+            ctx.strokeRect(x + 1, y + 1, width - 2, height - 2);
+            
+            // Draw SSTC Logo if loaded (13mm x 3mm = 153px x 35px at 300 DPI)
+            if (sstcLogoImg && sstcLogoImg.src && sstcLogoImg.src !== 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==') {
+                ctx.drawImage(sstcLogoImg, x + 12, y + 15, 153, 35);
+            } else {
+                // Fallback if no image loaded
+                ctx.fillStyle = '#ccc';
+                ctx.fillRect(x + 12, y + 15, 153, 35);
+                ctx.fillStyle = '#666';
+                ctx.font = '12px Arial';
+                ctx.fillText('SSTC Logo', x + 60, y + 35);
+            }
+            
+            // Product Type text (editable field) - bold
+            ctx.fillStyle = '#5a5a5a';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText(data.productType, x + 180, y + 35);
+            
+            // Product details - make user input bold
+            ctx.fillStyle = '#000';
+            
+            // Product specifications - bold
+            ctx.font = 'bold 11px Arial';
+            ctx.fillText(data.productName, x + 15, y + 70);
+            
+            // Model label and value - BOTH BOLD
+            ctx.font = 'bold 11px Arial';
+            ctx.fillText('Model: ' + data.model, x + 15, y + 85);
+            
+            // Serial number - bold
+            const serialNum = serialNumbers[index] || data.serialNumber;
+            ctx.font = 'bold 11px Arial';
+            ctx.fillText(serialNum, x + 15, y + 100);
+            
+            // Capacity (large text) - already bold
+            ctx.save();
+            ctx.font = 'bold 37px Arial';
+            ctx.fillStyle = '#000';
+            // Draw border around capacity
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            const capacityBorderWidth = 110.5;
+            const capacityBorderX = x + 215;
+            ctx.strokeRect(capacityBorderX, y + 55, capacityBorderWidth, 45);
+            
+            // Center justify text in border
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const capacityCenterX = capacityBorderX + capacityBorderWidth / 2;
+            const capacityCenterY = y + 55 + 45 / 2;
+            ctx.fillText(data.capacity, capacityCenterX, capacityCenterY);
+            ctx.restore();
+            
+            // Define consistent right margin
+            const rightMargin = 15;
+            const rightAlignX = x + width - rightMargin;
+            
+            // URLs near QR - right-aligned with same margin as bottom text
+            ctx.font = '9px Arial';
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'right';
+            ctx.fillText('https://sstc.tech', rightAlignX, y + 25);
+            ctx.fillText('Scan for service', rightAlignX, y + 32);
+            
+            // QR code - align with text above
+            const qrSize = 65;
+            const qrX = rightAlignX - qrSize;
+            
+            try {
+                const qrDiv = document.createElement('div');
+                qrDiv.style.position = 'absolute';
+                qrDiv.style.left = '-9999px';
+                document.body.appendChild(qrDiv);
+                
+                const qrLink = qrLinks[index] || 'https://sstc.tech';
+                new QRCode(qrDiv, {
+                    text: qrLink,
+                    width: qrSize,
+                    height: qrSize,
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                
+                setTimeout(() => {
+                    const qrCanvas = qrDiv.querySelector('canvas');
+                    if (qrCanvas) {
+                        ctx.drawImage(qrCanvas, qrX, y + 40, qrSize, qrSize);
+                    }
+                    document.body.removeChild(qrDiv);
+                }, 100);
+            } catch (e) {
+                ctx.strokeStyle = '#ccc';
+                ctx.strokeRect(qrX, y + 40, qrSize, qrSize);
+            }
+            
+            // Barcode
+            const barcodeY = y + 115;
+            const barcodeWidth = 340;
+            const barcodeHeight = 35;
+            
+            try {
+                const barcodeCanvas = document.createElement('canvas');
+                JsBarcode(barcodeCanvas, serialNum, {
+                    format: "CODE128",
+                    width: 2,
+                    height: barcodeHeight,
+                    displayValue: false,
+                    margin: 0
+                });
+                ctx.drawImage(barcodeCanvas, x + 15, barcodeY, barcodeWidth, barcodeHeight);
+            } catch (e) {
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 15, barcodeY, barcodeWidth, barcodeHeight);
+            }
+            
+            // SKU below barcode - BOTH LABEL AND VALUE BOLD
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#000000'; // Changed from #0066cc to black
+            ctx.font = 'bold 11px Arial';
+            ctx.fillText('SKU: ' + data.sku, x + 15, y + 163);
+            
+            // Bottom right text - right-aligned with consistent margin
+            ctx.fillStyle = '#000';
+            ctx.font = '8px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('Warranty void if removed', rightAlignX, y + 115);
+            ctx.fillText('PCB Made in China', rightAlignX, y + 122);
+            ctx.fillText('Assembled in Vietnam', rightAlignX, y + 129);
+            ctx.textAlign = 'left';
+        }
+        
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const pageFormat = document.getElementById('pageFormat').value;
+            const showGridLines = document.getElementById('showGridLines').checked;
+            const formData = getFormData();
+            
+            // Show loading message
+            showMessage('Generating PDF... Please wait.', 'success');
+            
+            // Create PDF
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: pageFormat
+            });
+            
+            // Page dimensions
+            const pageWidth = pageFormat === 'a4' ? 210 : 297;
+            const pageHeight = pageFormat === 'a4' ? 297 : 420;
+            
+            // Label dimensions
+            const labelWidth = 40;
+            const labelHeight = 15;
+            const margin = 10;
+            const spacing = 2;
+            
+            // Calculate labels per row and column
+            const labelsPerRow = Math.floor((pageWidth - 2 * margin) / (labelWidth + spacing));
+            const labelsPerColumn = Math.floor((pageHeight - 2 * margin - 20) / (labelHeight + spacing));
+            const labelsPerPage = labelsPerRow * labelsPerColumn;
+            
+            // Determine total labels
+            const totalLabels = serialNumbers.length > 0 ? serialNumbers.length : 1;
+            const totalPages = Math.ceil(totalLabels / labelsPerPage);
+            
+            // Pre-generate all barcodes and QR codes
+            const barcodes = [];
+            const qrcodes = [];
+            
+            for (let i = 0; i < totalLabels; i++) {
+                // Generate barcode
+                const serialNum = serialNumbers[i] || formData.serialNumber;
+                try {
+                    const barcodeCanvas = document.createElement('canvas');
+                    JsBarcode(barcodeCanvas, serialNum, {
+                        format: "CODE128",
+                        width: 1.5,
+                        height: 50,
+                        displayValue: false,
+                        margin: 0
+                    });
+                    barcodes.push(barcodeCanvas.toDataURL('image/png'));
+                } catch (e) {
+                    barcodes.push(null);
+                }
+                
+                // Generate QR code
+                const qrLink = qrLinks[i] || 'https://sstc.tech';
+                try {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.position = 'absolute';
+                    tempDiv.style.left = '-9999px';
+                    document.body.appendChild(tempDiv);
+                    
+                    const qr = new QRCode(tempDiv, {
+                        text: qrLink,
+                        width: 256,
+                        height: 256,
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                    
+                    await new Promise(resolve => {
+                        setTimeout(() => {
+                            const canvas = tempDiv.querySelector('canvas');
+                            if (canvas) {
+                                qrcodes.push(canvas.toDataURL('image/png'));
+                            } else {
+                                qrcodes.push(null);
+                            }
+                            document.body.removeChild(tempDiv);
+                            resolve();
+                        }, 200);
+                    });
+                } catch (e) {
+                    qrcodes.push(null);
+                }
+            }
+            
+            let labelIndex = 0;
+            
+            for (let page = 1; page <= totalPages; page++) {
+                if (page > 1) pdf.addPage();
+                
+                // Draw header
+                pdf.setFontSize(10);
+                pdf.text(`Product: ${formData.productName} | Model: ${formData.model}`, margin, 10);
+                pdf.text(`SKU: ${formData.sku} | Capacity: ${formData.capacity} | Carton: ${formData.cartonNumber}`, margin, 15);
+                pdf.text(`Page: ${page}/${totalPages} | Date: ${new Date().toLocaleDateString()}`, pageWidth - margin - 50, 10);
+                
+                // Draw labels
+                for (let row = 0; row < labelsPerColumn && labelIndex < totalLabels; row++) {
+                    for (let col = 0; col < labelsPerRow && labelIndex < totalLabels; col++) {
+                        const x = margin + col * (labelWidth + spacing);
+                        const y = 25 + row * (labelHeight + spacing);
+                        
+                        drawLabelPDF(pdf, x, y, labelWidth, labelHeight, formData, labelIndex, barcodes[labelIndex], qrcodes[labelIndex]);
+                        labelIndex++;
+                    }
+                }
+                
+                // Draw cutting grid lines if enabled
+                if (showGridLines) {
+                    pdf.setDrawColor(200, 200, 200);
+                    pdf.setLineWidth(0.1);
+                    pdf.setLineDash([2, 2], 0);
+                    
+                    // Vertical lines
+                    for (let col = 0; col <= labelsPerRow; col++) {
+                        const x = margin + col * (labelWidth + spacing) - spacing/2;
+                        if (col > 0 && col < labelsPerRow) {
+                            pdf.line(x, 25, x, 25 + labelsPerColumn * (labelHeight + spacing) - spacing);
+                        }
+                    }
+                    
+                    // Horizontal lines
+                    for (let row = 0; row <= labelsPerColumn; row++) {
+                        const y = 25 + row * (labelHeight + spacing) - spacing/2;
+                        if (row > 0 && row < labelsPerColumn) {
+                            pdf.line(margin, y, margin + labelsPerRow * (labelWidth + spacing) - spacing, y);
+                        }
+                    }
+                    
+                    pdf.setLineDash([], 0);
+                }
+            }
+            
+            // Save PDF
+            pdf.save(`SSTC_Labels_${new Date().getTime()}.pdf`);
+            showMessage('PDF generated successfully!', 'success');
+        }
+        
+        function drawLabelPDF(pdf, x, y, width, height, data, index, barcodeData, qrcodeData) {
+            // Draw BLACK border with 0.2 width
+            pdf.setDrawColor(0, 0, 0); // Changed to black
+            pdf.setLineWidth(0.2); // Set to 0.2
+            pdf.rect(x, y, width, height);
+            
+            // Draw SSTC Logo if loaded (13mm x 3mm)
+            if (sstcLogoImg && sstcLogoImg.src && sstcLogoImg.src !== 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==') {
+                pdf.addImage(sstcLogoImg.src, 'PNG', x + 1, y + 1.5, 13, 3);
+            } else {
+                // Fallback
+                pdf.setFillColor(200, 200, 200);
+                pdf.rect(x + 1, y + 1.5, 13, 3);
+                pdf.setFillColor(100, 100, 100);
+                pdf.setFontSize(2);
+                pdf.text('SSTC Logo', x + 4, y + 3);
+            }
+            
+            // Product Type (editable field) - bold
+            pdf.setFillColor(90, 90, 90);
+            pdf.setFontSize(3);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(data.productType, x + 15, y + 3);
+            
+            // Product details - make user input bold
+            pdf.setFillColor(0);
+            pdf.setFontSize(2.5);
+            
+            // Product specifications - bold
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(data.productName, x + 1.5, y + 6);
+            
+            // Model - BOTH label and value bold
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Model: ' + data.model, x + 1.5, y + 7.5);
+            
+            // Serial number - bold
+            const serialNum = serialNumbers[index] || data.serialNumber;
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(serialNum, x + 1.5, y + 9);
+            
+            // Capacity - already bold
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(7.5);
+            pdf.setDrawColor(200, 200, 200);
+            pdf.setLineWidth(0.2);
+            const capacityBorderWidth = 9.75;
+            const capacityBorderX = x + 18;
+            pdf.rect(capacityBorderX, y + 4.5, capacityBorderWidth, 4);
+            
+            // Center justify text in border
+            const capacityCenterX = capacityBorderX + capacityBorderWidth / 2;
+            pdf.text(data.capacity, capacityCenterX, y + 7.5, {align: 'center'});
+            
+            // Define consistent right margin for PDF
+            const rightMargin = 2;
+            
+            // URLs - right-aligned
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(1.8);
+            pdf.text('https://sstc.tech', x + width - rightMargin, y + 2.5, {align: 'right'});
+            pdf.text('Scan for service', x + width - rightMargin, y + 3.2, {align: 'right'});
+            
+            // QR code - align with text above
+            const qrSize = 5.5;
+            const qrX = x + width - rightMargin - qrSize;
+            
+            if (qrcodeData) {
+                pdf.addImage(qrcodeData, 'PNG', qrX, y + 4, qrSize, qrSize);
+            } else {
+                pdf.setDrawColor(200, 200, 200);
+                pdf.rect(qrX, y + 4, qrSize, qrSize);
+            }
+            
+            // Barcode
+            const barcodeY = y + 10;
+            const barcodeHeight = 2.8;
+            const barcodeWidth = 29;
+            
+            if (barcodeData) {
+                pdf.addImage(barcodeData, 'PNG', x + 1.5, barcodeY, barcodeWidth, barcodeHeight);
+            } else {
+                pdf.setDrawColor(200, 200, 200);
+                pdf.rect(x + 1.5, barcodeY, barcodeWidth, barcodeHeight);
+            }
+            
+            // SKU - BOTH label and value bold, color black
+            pdf.setFillColor(0, 0, 0); // Changed to black
+            pdf.setFontSize(2.5);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('SKU: ' + data.sku, x + 1.5, y + 13.8);
+            
+            // Reset font
+            pdf.setFont('helvetica', 'normal');
+            
+            // Bottom right text - right-aligned with consistent margin
+            pdf.setFillColor(0);
+            pdf.setFontSize(1.7);
+            pdf.text('Warranty void if removed', x + width - rightMargin, y + 10, {align: 'right'});
+            pdf.text('PCB Made in China', x + width - rightMargin, y + 10.7, {align: 'right'});
+            pdf.text('Assembled in Vietnam', x + width - rightMargin, y + 11.4, {align: 'right'});
+        }
+    </script>
+</body>
+</html>
