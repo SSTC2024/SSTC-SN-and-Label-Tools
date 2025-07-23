@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSTC Tools</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .file-label:hover {
+            background-color: #e0e0e0;
+            border-color: #4CAF50;
+        }
+        .file-selected {
+            background-color: #e8f5e9;
+            border-color: #4CAF50;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .save-button {
+            background-color: #2196F3;
+        }
+        .save-button:hover {
+            background-color: #1976D2;
+        }
+        .print-button {
+            background-color: #FF9800;
+        }
+        .print-button:hover {
+            background-color: #F57C00;
+        }
+        .barcode-button {
+            background-color: #9C27B0;
+        }
+        .barcode-button:hover {
+            background-color: #7B1FA2;
+        }
+        .high-res-button {
+            background-color: #F44336;
+        }
+        .high-res-button:hover {
+            background-color: #D32F2F;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .example {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .file-info {
+            font-size: 14px;
+            color: #666;
+            margin-left: 10px;
+        }
+        .browser-note {
+            font-size: 12px;
+            color: #666;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        .button-note {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .button-group > div {
+            display: inline-block;
+        }
+        .button-group > div > button {
+            display: block;
+            width: 100%;
+        }
+        #pdfPreview {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Excel Tool Suite</h1>
+    
+    <!-- Serial Number Generator -->
+    <div class="container">
+        <h2>1. Tạo List Series</h2>
+        <div class="form-group">
+            <label for="snModel">Model:</label>
+            <input type="text" id="snModel" placeholder="Enter model name">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="serialNumber">Số Series bắt đầu:</label>
+                <input type="text" id="serialNumber" placeholder="e.g., MS2506R0001">
+                <div class="example">Ví dụ: MS2506R0001 (chỉ có dãy số cuối sẽ tăng)</div>
+            </div>
+            <div class="form-group">
+                <label for="cartonNo">Số thùng Carton:</label>
+                <input type="text" id="cartonNo" placeholder="e.g., CTN001">
+            </div>
+            <div class="form-group">
+                <label for="quantity">Số lượng:</label>
+                <input type="number" id="quantity" min="1" placeholder="e.g., 100">
+            </div>
+        </div>
+        <div class="button-group">
+            <button onclick="generateSerialNumbers()">Tạo list Series</button>
+            <button class="save-button" onclick="generateSerialNumbers(true)">Tạo list Series và lưu...</button>
+            <div style="display: inline-block;">
+                <button class="barcode-button" onclick="createBarcodeSheet('A4', false)">Create A4 Barcode</button>
+                <div class="button-note">168 Codes / Page, Max 3000 Codes / 18 Pages / File</div>
+            </div>
+            <div style="display: inline-block;">
+                <button class="barcode-button" onclick="createBarcodeSheet('A3', false)">Create A3 Barcode</button>
+                <div class="button-note">336 Codes / Page, Max 4816 Codes / 15 Pages / File</div>
+            </div>
+            <button class="high-res-button" onclick="createBarcodeSheet('A4', true)">Create A4 Barcode - High Res</button>
+            <button class="high-res-button" onclick="createBarcodeSheet('A3', true)">Create A3 Barcode - High Res</button>
+        </div>
+        <div id="serialStatus" class="status"></div>
+        <canvas id="barcodeCanvasSN" style="display:none;"></canvas>
+    </div>
+    
+    <!-- Excel File Mixer -->
+    <div class="container">
+        <h2>2. Tạo list Tổng Hợp</h2>
+        <div class="form-group">
+            <label for="file1" class="file-label" id="file1Label">
+                Chọn list Series
+            </label>
+            <input type="file" id="file1" accept=".xlsx,.xls" onchange="handleFileSelect(1)">
+            <span id="file1Info" class="file-info"></span>
+        </div>
+        <div class="form-group">
+            <label for="file2" class="file-label" id="file2Label">
+                Chọn list QR
+            </label>
+            <input type="file" id="file2" accept=".xlsx,.xls" onchange="handleFileSelect(2)">
+            <span id="file2Info" class="file-info"></span>
+        </div>
+        <button onclick="mixExcelFiles()">Tạo List Tổng Hợp</button>
+        <button class="save-button" onclick="mixExcelFiles(true)">Tạo list và lưu..</button>
+        <div id="mixStatus" class="status"></div>
+        
+        <div class="browser-note">
+            <strong>Note:</strong> "Save To..." feature works best in Chrome, Edge, and Opera browsers. Other browsers will download to your default Downloads folder.
+        </div>
+    </div>
+
+    <!-- Create Carton Label -->
+    <div class="container">
+        <h2>3. Tạo nhãn in thùng Carton</h2>
+        <div class="form-group">
+            <label for="productName">Product Name:</label>
+            <input type="text" id="productName" placeholder="Enter product name">
+        </div>
+        <div class="form-group">
+            <label for="model">Model:</label>
+            <input type="text" id="model" placeholder="Enter model name">
+        </div>
+        <div class="form-group">
+            <label for="sku">SKU:</label>
+            <input type="text" id="sku" placeholder="Enter SKU">
+        </div>
+        <div class="form-group">
+            <label for="snListFile" class="file-label" id="snListLabel">
+                Chọn List Series
+            </label>
+            <input type="file" id="snListFile" accept=".xlsx,.xls" onchange="handleSNListSelect()">
+            <span id="snListInfo" class="file-info"></span>
+            <div class="example">File Excel sẽ nhận hàng đầu tiên của cột là tiêu đề, các hàng còn lại là số Series</div>
+        </div>
+        <div class="button-group">
+            <button onclick="createPDF()">Tạo 2 Label Giống nhau Size A4</button>
+            <button class="save-button" onclick="createPDF(true)">Tạo 2 Label giống nhau và lưu...</button>
+            <button onclick="createPDF2Different()">Tạo 2 Label khác nhau Size A4</button>
+            <button class="save-button" onclick="createPDF2Different(true)">Tạo 2 Label khác nhau và lưu...</button>
+            <button class="print-button" onclick="printPDF()" id="printButton" disabled>In PDF</button>
+        </div>
+        <div id="cartonStatus" class="status"></div>
+        <canvas id="barcodeCanvas" style="display:none;"></canvas>
+    </div>
+
+    <script>
+        // Global variables for PDF functionality
+        let currentPDF = null;
+        let serialNumberData = [];
+        let generatedSerialNumbers = [];
+        let totalQuantityAllCartons = 0; // Add this for tracking total quantity
+        
+        // Check if File System Access API is supported
+        const supportsFileSystemAccess = 'showSaveFilePicker' in window;
+
+        // File selection handler
+        function handleFileSelect(fileNum) {
+            const fileInput = document.getElementById(`file${fileNum}`);
+            const fileLabel = document.getElementById(`file${fileNum}Label`);
+            const fileInfo = document.getElementById(`file${fileNum}Info`);
+            
+            if (fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name;
+                fileLabel.classList.add('file-selected');
+                fileLabel.textContent = 'Đã chọn File';
+                fileInfo.textContent = fileName;
+            }
+        }
+
+        // Handle SN List file selection
+        function handleSNListSelect() {
+            const fileInput = document.getElementById('snListFile');
+            const fileLabel = document.getElementById('snListLabel');
+            const fileInfo = document.getElementById('snListInfo');
+            
+            if (fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name;
+                fileLabel.classList.add('file-selected');
+                fileLabel.textContent = 'File Selected';
+                fileInfo.textContent = fileName;
+                
+                // Read and parse the file
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const wb = XLSX.read(e.target.result, {type: 'binary'});
+                        const ws = wb.Sheets[wb.SheetNames[0]];
+                        const data = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ''});
+                        
+                        // Parse columns
+                        serialNumberData = [];
+                        totalQuantityAllCartons = 0; // Reset total quantity
+                        
+                        if (data.length > 0) {
+                            const headers = data[0];
+                            for (let col = 0; col < headers.length; col++) {
+                                if (headers[col]) {
+                                    const columnData = {
+                                        title: headers[col],
+                                        serialNumbers: []
+                                    };
+                                    
+                                    for (let row = 1; row < data.length; row++) {
+                                        if (data[row][col] && data[row][col].toString().trim()) {
+                                            columnData.serialNumbers.push(data[row][col].toString().trim());
+                                        }
+                                    }
+                                    
+                                    if (columnData.serialNumbers.length > 0) {
+                                        serialNumberData.push(columnData);
+                                        totalQuantityAllCartons += columnData.serialNumbers.length; // Add to total
+                                    }
+                                }
+                            }
+                        }
+                        
+                        showStatus(document.getElementById('cartonStatus'), 
+                            `Loaded ${serialNumberData.length} column(s) with ${totalQuantityAllCartons} total serial numbers`, 'success');
+                    } catch (error) {
+                        showStatus(document.getElementById('cartonStatus'), 
+                            'Error reading file: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsBinaryString(fileInput.files[0]);
+            }
+        }
+
+        // Create barcode as base64 image with high resolution for printing
+        function createBarcodeImage(text, canvasId = 'barcodeCanvas', scale = 2) {
+            const canvas = document.getElementById(canvasId);
+            JsBarcode(canvas, text, {
+                format: "CODE128",
+                width: 2 * scale,  // Increased for better resolution
+                height: 30 * scale,  // Further increased height for better scanning (was 25)
+                displayValue: false,
+                margin: 0
+            });
+            return canvas.toDataURL('image/png');
+        }
+
+        // Generate serial numbers from input
+        function generateSerialNumbersList() {
+            const serialNumber = document.getElementById('serialNumber').value.trim();
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const model = document.getElementById('snModel').value.trim();
+            const cartonNo = document.getElementById('cartonNo').value.trim();
+            
+            if (!serialNumber || !quantity || quantity < 1 || !model || !cartonNo) {
+                return null;
+            }
+            
+            // Extract number parts from the serial number
+            const numberMatches = serialNumber.match(/\d+/g);
+            if (!numberMatches || numberMatches.length === 0) {
+                return null;
+            }
+            
+            // Find the last number in the string and its position
+            let lastNumberIndex = -1;
+            let lastNumberMatch = null;
+            let lastNumberPosition = -1;
+            
+            for (let i = numberMatches.length - 1; i >= 0; i--) {
+                const match = numberMatches[i];
+                const position = serialNumber.lastIndexOf(match);
+                if (position > lastNumberPosition) {
+                    lastNumberIndex = i;
+                    lastNumberMatch = match;
+                    lastNumberPosition = position;
+                }
+            }
+            
+            if (lastNumberMatch === null) {
+                return null;
+            }
+            
+            const numberLength = lastNumberMatch.length;
+            const startNumber = parseInt(lastNumberMatch);
+            const prefix = serialNumber.substring(0, lastNumberPosition);
+            const suffix = serialNumber.substring(lastNumberPosition + numberLength);
+            
+            // Generate serial numbers
+            const numbers = [];
+            for (let i = 0; i < quantity; i++) {
+                const currentNumber = startNumber + i;
+                const paddedNumber = currentNumber.toString().padStart(numberLength, '0');
+                const fullSerial = prefix + paddedNumber + suffix;
+                numbers.push(fullSerial);
+            }
+            
+            return {
+                serialNumbers: numbers,
+                model: model,
+                cartonNo: cartonNo,
+                quantity: quantity,
+                firstSN: serialNumber,
+                lastSN: numbers[numbers.length - 1]
+            };
+        }
+
+        // Create barcode sheet with batch processing
+        // Create barcode sheet with updated layout
+        async function createBarcodeSheet(pageSize, highRes) {
+            const statusDiv = document.getElementById('serialStatus');
+            const data = generateSerialNumbersList();
+            
+            if (!data) {
+                showStatus(statusDiv, 'Please fill in all fields correctly', 'error');
+                return;
+            }
+            
+            generatedSerialNumbers = data.serialNumbers;
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const isA3 = pageSize === 'A3';
+                
+                // Set batch limits based on format and resolution
+                let batchLimit;
+                if (isA3) {
+                    batchLimit = highRes ? 2000 : 4816; // A3: 2000 high-res, 4816 normal (8 cols x 42 rows x 14.29 pages)
+                } else {
+                    batchLimit = highRes ? 1500 : 3000; // A4: 1500 high-res, 3000 normal
+                }
+                
+                // Calculate number of batches needed
+                const totalQuantity = data.quantity;
+                const numBatches = Math.ceil(totalQuantity / batchLimit);
+                
+                // Show batch processing info
+                if (numBatches > 1) {
+                    showStatus(statusDiv, `Quantity ${totalQuantity} exceeds limit of ${batchLimit}. Creating ${numBatches} PDF files...`, 'info');
+                }
+                
+                // Process each batch
+                for (let batchNum = 0; batchNum < numBatches; batchNum++) {
+                    const batchStartIdx = batchNum * batchLimit;
+                    const batchEndIdx = Math.min(batchStartIdx + batchLimit, totalQuantity);
+                    const batchQuantity = batchEndIdx - batchStartIdx;
+                    
+                    // Create batch data
+                    const batchData = {
+                        serialNumbers: data.serialNumbers.slice(batchStartIdx, batchEndIdx),
+                        model: data.model,
+                        cartonNo: data.cartonNo,
+                        quantity: batchQuantity,
+                        firstSN: data.serialNumbers[batchStartIdx],
+                        lastSN: data.serialNumbers[batchEndIdx - 1],
+                        totalQuantity: totalQuantity,
+                        batchNum: batchNum + 1,
+                        totalBatches: numBatches
+                    };
+                    
+                    // Create new PDF for each batch
+                    const pdf = new jsPDF('p', 'mm', pageSize.toLowerCase());
+                    
+                    const pageWidth = isA3 ? 297 : 210;
+                    const pageHeight = isA3 ? 420 : 297;
+                    const margin = 6;
+                    
+                    // Force columns to be exactly 8 for A3, 6 for A4
+                    const cols = isA3 ? 8 : 6;
+                    const rows = isA3 ? 42 : 28;
+                    const scale = highRes ? 4 : 2; // THIS IS KEY - highRes parameter determines scale
+                    
+                    const totalPerPage = cols * rows;
+                    const totalPages = Math.ceil(batchData.quantity / totalPerPage);
+                    
+                    // Calculate layout
+                    const contentTop = margin + 18;
+                    const contentHeight = pageHeight - contentTop - margin;
+                    const usableWidth = pageWidth - 2 * margin;
+                    const cellWidth = usableWidth / cols; // Distribute width evenly across columns
+                    const cellHeight = contentHeight / rows;
+                    const barcodeWidth = cellWidth - 2;
+                    const barcodeHeight = cellHeight * 0.35;
+                    
+                    // Define spacing constants
+                    const barcodeAndTextHeight = barcodeHeight + 2.5 + 1.94;
+                    const lineGap = 1.5;
+                    const totalRowHeight = barcodeAndTextHeight + lineGap;
+                    const topOffset = 0.5;
+                    
+                    const creationDate = new Date().toLocaleDateString('en-US');
+                    
+                    // Process each page
+                    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+                        if (pageNum > 0) pdf.addPage();
+                        
+                        const startIdx = pageNum * totalPerPage;
+                        const endIdx = Math.min(startIdx + totalPerPage, batchData.quantity);
+                        const pageQty = endIdx - startIdx;
+                        
+                        // Header - Combined First Line
+                        pdf.setFontSize(10);
+                        
+                        // Calculate 1/4 positions across page width
+                        const quarterWidth = (pageWidth - 2 * margin) / 4;
+                        
+                        // Model (1st quarter)
+                        let modelText = `Model: ${batchData.model}`;
+                        if (batchData.totalBatches > 1) {
+                            modelText += ` (Batch ${batchData.batchNum}/${batchData.totalBatches})`;
+                        }
+                        pdf.text(modelText, margin, margin + 8);
+                        
+                        // Page (2nd quarter)
+                        const pageText = `Page: ${pageNum + 1} / ${totalPages}`;
+                        pdf.text(pageText, margin + quarterWidth, margin + 8);
+                        
+                        // Quantity (3rd quarter)
+                        let qtyText = `Quantity: ${pageQty} / ${batchData.quantity}`;
+                        if (batchData.totalBatches > 1) {
+                            qtyText = `Qty: ${pageQty} / ${batchData.quantity} (Total: ${batchData.totalQuantity})`;
+                        }
+                        pdf.text(qtyText, margin + quarterWidth * 2, margin + 8);
+                        
+                        // Creating Date (4th quarter)
+                        const dateText = `Creating Date: ${creationDate}`;
+                        pdf.text(dateText, margin + quarterWidth * 3, margin + 8);
+                        
+                        // Second Line: Serial Number Range
+                        pdf.setFontSize(10);
+                        pdf.text(`Serial Number Range: ${batchData.serialNumbers[startIdx]} - ${batchData.serialNumbers[endIdx - 1]}`, margin, margin + 12);
+                        
+                        // Add barcodes and serial numbers
+                        const topOffset = 2; // 2mm space between top grid line and first barcode
+                        for (let i = startIdx; i < endIdx; i++) {
+                            const localIdx = i - startIdx;
+                            const row = Math.floor(localIdx / cols);
+                            const col = localIdx % cols;
+                            const x = margin + col * cellWidth + 1;
+                            
+                            const y = contentTop + topOffset + row * totalRowHeight;
+                            
+                            // Create and add barcode with correct scale
+                            const barcodeImage = createBarcodeImage(batchData.serialNumbers[i], 'barcodeCanvasSN', scale);
+                            pdf.addImage(barcodeImage, 'PNG', x, y, barcodeWidth, barcodeHeight);
+                            
+                            // Add serial number text below barcode
+                            pdf.setFontSize(5.5);
+                            pdf.text(batchData.serialNumbers[i], x, y + barcodeHeight + 2.5);
+                        }
+                        
+                        // ========== ADD GRID LINES FOR DIE CUTTING ==========
+                        pdf.setDrawColor(0, 0, 0);
+                        pdf.setLineWidth(0.1);
+                        
+                        const actualRows = Math.ceil((endIdx - startIdx) / cols);
+                        const actualCols = Math.min(cols, pageQty); // Only draw grid for columns that have data
+                        
+                        // Calculate the actual right boundary (only where barcodes exist)
+                        const rightBoundary = margin + actualCols * cellWidth;
+                        
+                        // First line at the top
+                        pdf.line(margin, contentTop, rightBoundary, contentTop);
+                        
+                        // Lines between rows
+                        for (let row = 0; row < actualRows - 1; row++) {
+                            const gridY = contentTop + topOffset + (row + 1) * totalRowHeight - lineGap / 0.7;
+                            pdf.line(margin, gridY, rightBoundary, gridY);
+                        }
+                        
+                        // Last line at the bottom
+                        const lastY = contentTop + topOffset + actualRows * totalRowHeight;
+                        pdf.line(margin, lastY, rightBoundary, lastY);
+                        
+                        // Draw vertical lines (only for columns with data)
+                        for (let col = 0; col <= actualCols; col++) {
+                            const gridX = margin + col * cellWidth;
+                            const bottomY = contentTop + topOffset + actualRows * totalRowHeight;
+                            pdf.line(gridX, contentTop, gridX, bottomY);
+                        }
+                        
+                        pdf.setDrawColor(0, 0, 0);
+                        // ========== END OF GRID LINES ==========
+                    }
+                    
+                    // Generate filename with date and batch number
+                    const date = new Date().toISOString().split('T')[0];
+                    let filename = `${batchData.model}_${batchData.firstSN}_${batchData.lastSN}_QTY${batchData.quantity}_${date}`;
+                    
+                    if (batchData.totalBatches > 1) {
+                        filename += `_Batch${batchData.batchNum}`;
+                    }
+                    
+                    filename += '.pdf';
+                    
+                    pdf.save(filename);
+                    
+                    // Show status
+                    if (batchData.totalBatches > 1) {
+                        showStatus(statusDiv, `Batch ${batchData.batchNum}/${batchData.totalBatches} created: ${filename}`, 'success');
+                    } else {
+                        showStatus(statusDiv, `${pageSize} barcode sheet created successfully!`, 'success');
+                    }
+                    
+                    // Small delay between batches
+                    if (batchNum < numBatches - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                }
+                
+                // Show final success message for multiple batches
+                if (numBatches > 1) {
+                    showStatus(statusDiv, `Successfully created ${numBatches} PDF files for ${totalQuantity} barcodes!`, 'success');
+                }
+                
+            } catch (error) {
+                showStatus(statusDiv, 'Error creating barcode sheet: ' + error.message, 'error');
+            }
+        }
+
+        // Create PDF with 2 labels per page - UPDATED WITH NEW REQUIREMENTS
+        async function createPDF(useSavePicker = false) {
+            const productName = document.getElementById('productName').value.trim();
+            const model = document.getElementById('model').value.trim();
+            const sku = document.getElementById('sku').value.trim();
+            const statusDiv = document.getElementById('cartonStatus');
+            
+            // Validation
+            if (!productName || !model || !sku) {
+                showStatus(statusDiv, 'Please enter Product Name, Model and SKU', 'error');
+                return;
+            }
+            
+            if (serialNumberData.length === 0) {
+                showStatus(statusDiv, 'Please upload a serial number list', 'error');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = 210;
+                const pageHeight = 297;
+                const margin = 10;
+                
+                // Calculate total pages
+                const totalPages = serialNumberData.length;
+                
+                // Get packing date for filename
+                const now = new Date();
+                const packingDateForFilename = now.toISOString().split('T')[0]; // yyyy-mm-dd format
+                
+                // Now create PDF with 2 labels per page
+                let pageCount = 0;
+                for (let i = 0; i < serialNumberData.length; i++) {
+                    const columnData = serialNumberData[i];
+                    const packingDate = now.toLocaleDateString('en-GB').split('/').join('/'); // dd/mm/yyyy
+                    const packingTime = now.toTimeString().slice(0, 5); // hh:mm
+                    
+                    const pageData = {
+                        productName: productName,
+                        model: model,
+                        sku: sku,
+                        quantity: columnData.serialNumbers.length,
+                        totalQuantity: totalQuantityAllCartons, // Add total quantity
+                        cartonNo: columnData.title,
+                        packingDate: packingDate,
+                        packingTime: packingTime,
+                        serialNumbers: columnData.serialNumbers,
+                        currentPage: i + 1,
+                        totalPages: totalPages
+                    };
+                    
+                    // Add new page if needed
+                    if (pageCount > 0) pdf.addPage();
+                    
+                    // Create 2 identical labels on the same page
+                    createLabelContent(pdf, pageData, pageWidth, pageHeight, margin, 0); // Top label
+                    
+                    // Add cutting line between labels (adjusted for new label gap)
+                    pdf.setDrawColor(128, 128, 128); // Gray color
+                    pdf.setLineWidth(0.5);
+                    pdf.setLineDashPattern([5, 5], 0); // Dashed line
+                    const labelGap = 5;
+                    const labelHeight = (pageHeight - margin * 2 - labelGap) / 2;
+                    const cutLineY = margin + labelHeight + labelGap/2;
+                    pdf.line(0, cutLineY, pageWidth, cutLineY);
+                    pdf.setLineDashPattern([], 0); // Reset to solid line
+                    
+                    createLabelContent(pdf, pageData, pageWidth, pageHeight, margin, 1); // Bottom label
+                    
+                    pageCount++;
+                }
+                
+                // Store PDF for printing
+                currentPDF = pdf;
+                document.getElementById('printButton').disabled = false;
+                
+                // Updated filename format: Model + Total Quantity + Packing Date
+                const filename = `${model}_QTY${totalQuantityAllCartons}_${packingDateForFilename}.pdf`;
+                
+                if (useSavePicker && supportsFileSystemAccess) {
+                    // Convert to blob
+                    const pdfBlob = pdf.output('blob');
+                    
+                    const options = {
+                        suggestedName: filename,
+                        types: [{
+                            description: 'PDF Files',
+                            accept: {
+                                'application/pdf': ['.pdf']
+                            }
+                        }]
+                    };
+                    
+                    try {
+                        const handle = await window.showSaveFilePicker(options);
+                        const writable = await handle.createWritable();
+                        await writable.write(pdfBlob);
+                        await writable.close();
+                        showStatus(statusDiv, 'PDF created and saved successfully!', 'success');
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            // Fallback to download
+                            pdf.save(filename);
+                            showStatus(statusDiv, 'PDF created successfully! (Downloaded to default folder)', 'success');
+                        } else {
+                            showStatus(statusDiv, 'Save cancelled', 'info');
+                        }
+                    }
+                } else {
+                    pdf.save(filename);
+                    showStatus(statusDiv, 'PDF created successfully!', 'success');
+                }
+                
+            } catch (error) {
+                showStatus(statusDiv, 'Error creating PDF: ' + error.message, 'error');
+            }
+        }
+        
+        // Helper function to create label content with updated layout and formatting
+        function createLabelContent(pdf, pageData, pageWidth, pageHeight, margin, position) {
+            // Each label takes half the page height with reduced gap between labels
+            const labelGap = 5; // Reduced gap between labels (was margin)
+            const labelHeight = (pageHeight - margin * 2 - labelGap) / 2;
+            const yOffset = margin + position * (labelHeight + labelGap);
+            
+            // Section 1 - Header Information (further reduced height)
+            const section1Height = 17; // Reduced from 20
+            pdf.setDrawColor(0);
+            pdf.rect(margin, yOffset, pageWidth - 2 * margin, section1Height);
+            
+            pdf.setFontSize(9); // Reduced from 12
+            
+            // First row: Product Name (with bold label) - reduced spacing
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Product Name:', margin + 3, yOffset + 4);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageData.productName, margin + 3 + pdf.getTextWidth('Product Name:') + 2, yOffset + 4);
+            
+            // Second row: Model (left), SKU (center), Page No (right) - reduced spacing
+            // Model - left aligned with bold label
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Model:', margin + 3, yOffset + 8);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageData.model, margin + 3 + pdf.getTextWidth('Model:') + 2, yOffset + 8);
+            
+            // SKU - center aligned with bold label
+            pdf.setFont(undefined, 'bold');
+            const skuLabelText = 'SKU:';
+            const skuX = (pageWidth - pdf.getTextWidth(skuLabelText) - pdf.getTextWidth(pageData.sku) - 2) / 2;
+            pdf.text(skuLabelText, skuX, yOffset + 8);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageData.sku, skuX + pdf.getTextWidth(skuLabelText) + 2, yOffset + 8);
+            
+            // Page No - right aligned with bold label
+            pdf.setFont(undefined, 'bold');
+            const pageLabel = 'Page No:';
+            const pageValue = `${pageData.currentPage} / ${pageData.totalPages}`;
+            const pageFullWidth = pdf.getTextWidth(pageLabel) + pdf.getTextWidth(pageValue) + 2;
+            const pageX = pageWidth - margin - pageFullWidth - 3;
+            pdf.text(pageLabel, pageX, yOffset + 8);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageValue, pageX + pdf.getTextWidth(pageLabel) + 2, yOffset + 8);
+            
+            // Third row: Quantity (left), Carton No (center), and Packing Date with time (right) - reduced spacing
+            const actualQuantity = Math.min(pageData.serialNumbers.length, 60);
+            
+            // QTY - left aligned (with bold label and current/total format)
+            pdf.setFont(undefined, 'bold');
+            pdf.text('QTY:', margin + 3, yOffset + 12);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(`${actualQuantity} / ${pageData.totalQuantity}`, margin + 3 + pdf.getTextWidth('QTY:') + 2, yOffset + 12);
+            
+            // Carton No - center aligned with bold label
+            pdf.setFont(undefined, 'bold');
+            const cartonLabel = 'Carton No:';
+            const cartonValue = pageData.cartonNo;
+            const cartonX = (pageWidth - pdf.getTextWidth(cartonLabel) - pdf.getTextWidth(cartonValue) - 2) / 2;
+            pdf.text(cartonLabel, cartonX, yOffset + 12);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(cartonValue, cartonX + pdf.getTextWidth(cartonLabel) + 2, yOffset + 12);
+            
+            // Packing Date - right aligned with bold label
+            pdf.setFont(undefined, 'bold');
+            const packingLabel = 'Packing Date:';
+            const packingValue = `${pageData.packingDate} ${pageData.packingTime}`;
+            const packingFullWidth = pdf.getTextWidth(packingLabel) + pdf.getTextWidth(packingValue) + 2;
+            const packingX = pageWidth - margin - packingFullWidth - 3;
+            pdf.text(packingLabel, packingX, yOffset + 12);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(packingValue, packingX + pdf.getTextWidth(packingLabel) + 2, yOffset + 12);
+            
+            // Section 2 - Barcodes and Serial Numbers (reduced gap)
+            const section2Top = yOffset + section1Height + 2; // Reduced from 3
+            const section2Height = labelHeight - section1Height - 2; // Adjusted for reduced gap
+            pdf.rect(margin, section2Top, pageWidth - 2 * margin, section2Height);
+            
+            // Calculate layout for barcodes - OPTIMIZED FOR 60 ITEMS with increased barcode height
+            const maxPerLabel = 60;
+            const cols = 6;
+            const rows = 10;
+            const cellWidth = (pageWidth - 2 * margin - 10) / cols;
+            const cellHeight = (section2Height - 6) / rows; // Reduced padding from 8 to 6
+            const barcodeWidth = cellWidth - 2;
+            const barcodeHeight = cellHeight * 0.45; // Original ratio that worked well
+            
+            // Add barcodes and serial numbers
+            const itemsToShow = Math.min(pageData.serialNumbers.length, maxPerLabel);
+            
+            for (let i = 0; i < itemsToShow; i++) {
+                const row = Math.floor(i / cols);
+                const col = i % cols;
+                const x = margin + 5 + col * cellWidth;
+                const y = section2Top + 3 + row * cellHeight; // Reduced from 4 to 3
+                
+                // Create and add barcode with higher resolution
+                const barcodeImage = createBarcodeImage(pageData.serialNumbers[i], 'barcodeCanvas', 3); // Increased scale from 2 to 3
+                pdf.addImage(barcodeImage, 'PNG', x, y, barcodeWidth, barcodeHeight);
+                
+                // Add serial number text below barcode
+                pdf.setFontSize(5.5); // Slightly increased from 5
+                pdf.text(pageData.serialNumbers[i], x, y + barcodeHeight + 2); // Original spacing to prevent overlap
+            }
+        }
+
+        // Create PDF with 2 different labels per page
+        async function createPDF2Different(useSavePicker = false) {
+            const productName = document.getElementById('productName').value.trim();
+            const model = document.getElementById('model').value.trim();
+            const sku = document.getElementById('sku').value.trim();
+            const statusDiv = document.getElementById('cartonStatus');
+            
+            // Validation
+            if (!productName || !model || !sku) {
+                showStatus(statusDiv, 'Please enter Product Name, Model and SKU', 'error');
+                return;
+            }
+            
+            if (serialNumberData.length === 0) {
+                showStatus(statusDiv, 'Please upload a serial number list', 'error');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = 210;
+                const pageHeight = 297;
+                const margin = 10;
+                
+                // Get packing date for filename
+                const now = new Date();
+                const packingDateForFilename = now.toISOString().split('T')[0]; // yyyy-mm-dd format
+                
+                // Process 2 cartons at a time
+                let pageCount = 0;
+                for (let i = 0; i < serialNumberData.length; i += 2) {
+                    // Add new page if needed
+                    if (pageCount > 0) pdf.addPage();
+                    
+                    // First label (top)
+                    const firstColumnData = serialNumberData[i];
+                    const packingDate = now.toLocaleDateString('en-GB').split('/').join('/'); // dd/mm/yyyy
+                    const packingTime = now.toTimeString().slice(0, 5); // hh:mm
+                    
+                    const firstLabelData = {
+                        productName: productName,
+                        model: model,
+                        sku: sku,
+                        quantity: firstColumnData.serialNumbers.length,
+                        totalQuantity: totalQuantityAllCartons,
+                        cartonNo: firstColumnData.title,
+                        packingDate: packingDate,
+                        packingTime: packingTime,
+                        serialNumbers: firstColumnData.serialNumbers,
+                        currentPage: i + 1,
+                        totalPages: serialNumberData.length
+                    };
+                    
+                    createLabelContent(pdf, firstLabelData, pageWidth, pageHeight, margin, 0); // Top label
+                    
+                    // Add cutting line between labels
+                    pdf.setDrawColor(128, 128, 128); // Gray color
+                    pdf.setLineWidth(0.5);
+                    pdf.setLineDashPattern([5, 5], 0); // Dashed line
+                    const labelGap = 5;
+                    const labelHeight = (pageHeight - margin * 2 - labelGap) / 2;
+                    const cutLineY = margin + labelHeight + labelGap/2;
+                    pdf.line(0, cutLineY, pageWidth, cutLineY);
+                    pdf.setLineDashPattern([], 0); // Reset to solid line
+                    
+                    // Second label (bottom) - only if there's another carton
+                    if (i + 1 < serialNumberData.length) {
+                        const secondColumnData = serialNumberData[i + 1];
+                        const secondLabelData = {
+                            productName: productName,
+                            model: model,
+                            sku: sku,
+                            quantity: secondColumnData.serialNumbers.length,
+                            totalQuantity: totalQuantityAllCartons,
+                            cartonNo: secondColumnData.title,
+                            packingDate: packingDate,
+                            packingTime: packingTime,
+                            serialNumbers: secondColumnData.serialNumbers,
+                            currentPage: i + 2,
+                            totalPages: serialNumberData.length
+                        };
+                        
+                        createLabelContent(pdf, secondLabelData, pageWidth, pageHeight, margin, 1); // Bottom label
+                    } else {
+                        // If odd number of cartons, leave bottom half empty
+                        // Optionally, you can add a blank label or just leave it empty
+                    }
+                    
+                    pageCount++;
+                }
+                
+                // Store PDF for printing
+                currentPDF = pdf;
+                document.getElementById('printButton').disabled = false;
+                
+                // Updated filename format: Model + Total Quantity + Packing Date + 2Different
+                const filename = `${model}_QTY${totalQuantityAllCartons}_${packingDateForFilename}_2Different.pdf`;
+                
+                if (useSavePicker && supportsFileSystemAccess) {
+                    // Convert to blob
+                    const pdfBlob = pdf.output('blob');
+                    
+                    const options = {
+                        suggestedName: filename,
+                        types: [{
+                            description: 'PDF Files',
+                            accept: {
+                                'application/pdf': ['.pdf']
+                            }
+                        }]
+                    };
+                    
+                    try {
+                        const handle = await window.showSaveFilePicker(options);
+                        const writable = await handle.createWritable();
+                        await writable.write(pdfBlob);
+                        await writable.close();
+                        showStatus(statusDiv, 'PDF with 2 different labels created and saved successfully!', 'success');
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            // Fallback to download
+                            pdf.save(filename);
+                            showStatus(statusDiv, 'PDF with 2 different labels created successfully! (Downloaded to default folder)', 'success');
+                        } else {
+                            showStatus(statusDiv, 'Save cancelled', 'info');
+                        }
+                    }
+                } else {
+                    pdf.save(filename);
+                    showStatus(statusDiv, 'PDF with 2 different labels created successfully!', 'success');
+                }
+                
+            } catch (error) {
+                showStatus(statusDiv, 'Error creating PDF: ' + error.message, 'error');
+            }
+        }
+
+        // Print PDF
+        function printPDF() {
+            if (currentPDF) {
+                currentPDF.autoPrint();
+                const pdfBlob = currentPDF.output('blob');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                const printWindow = window.open(pdfUrl);
+                
+                if (printWindow) {
+                    printWindow.onload = function() {
+                        printWindow.print();
+                    };
+                }
+            }
+        }
+
+        // Save file with File System Access API
+        async function saveFileWithPicker(blob, suggestedName) {
+            try {
+                const options = {
+                    suggestedName: suggestedName,
+                    types: [{
+                        description: 'Excel Files',
+                        accept: {
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+                        }
+                    }]
+                };
+                
+                const handle = await window.showSaveFilePicker(options);
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                
+                return true;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Save failed:', err);
+                    return false;
+                }
+                return null; // User cancelled
+            }
+        }
+
+        // Fallback save method
+        function saveFileWithDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Serial Number Generator Function
+        async function generateSerialNumbers(useSavePicker = false) {
+            const statusDiv = document.getElementById('serialStatus');
+            const data = generateSerialNumbersList();
+            
+            if (!data) {
+                showStatus(statusDiv, 'Please fill in all fields correctly', 'error');
+                return;
+            }
+            
+            try {
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                const sheetData = [];
+                
+                // Add data as requested: A1 = First Serial Number, B1 = Model + Qty
+                sheetData.push([data.firstSN, `${data.model} ${data.quantity}`]);
+                
+                // Add all serial numbers
+                for (let i = 0; i < data.serialNumbers.length; i++) {
+                    sheetData.push([data.serialNumbers[i]]);
+                }
+                
+                // Create worksheet
+                const ws = XLSX.utils.aoa_to_sheet(sheetData);
+                XLSX.utils.book_append_sheet(wb, ws, 'Serial Numbers');
+                
+                // Generate filename with date
+                const date = new Date().toISOString().split('T')[0];
+                const filename = `${data.cartonNo}_${data.model}_${data.firstSN}_QTY${data.quantity}_${date}.xlsx`;
+                
+                // Save file
+                if (useSavePicker && supportsFileSystemAccess) {
+                    // Convert to blob
+                    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    
+                    const saved = await saveFileWithPicker(blob, filename);
+                    if (saved === true) {
+                        showStatus(statusDiv, `Successfully saved ${data.quantity} serial numbers!`, 'success');
+                    } else if (saved === null) {
+                        showStatus(statusDiv, 'Save cancelled', 'info');
+                    } else {
+                        // Fallback to download
+                        XLSX.writeFile(wb, filename);
+                        showStatus(statusDiv, `Successfully generated ${data.quantity} serial numbers! (Downloaded to default folder)`, 'success');
+                    }
+                } else {
+                    XLSX.writeFile(wb, filename);
+                    showStatus(statusDiv, `Successfully generated ${data.quantity} serial numbers!`, 'success');
+                }
+                
+                // Store generated serial numbers for barcode creation
+                generatedSerialNumbers = data.serialNumbers;
+                
+            } catch (error) {
+                showStatus(statusDiv, 'Error generating serial numbers: ' + error.message, 'error');
+            }
+        }
+        
+        // Excel File Mixer Function
+        async function mixExcelFiles(useSavePicker = false) {
+            const file1Input = document.getElementById('file1');
+            const file2Input = document.getElementById('file2');
+            const statusDiv = document.getElementById('mixStatus');
+            
+            if (!file1Input.files[0] || !file2Input.files[0]) {
+                showStatus(statusDiv, 'Please select both Excel files', 'error');
+                return;
+            }
+            
+            const reader1 = new FileReader();
+            const reader2 = new FileReader();
+            
+            reader1.onload = function(e1) {
+                reader2.onload = async function(e2) {
+                    try {
+                        // Read workbooks
+                        const wb1 = XLSX.read(e1.target.result, {type: 'binary'});
+                        const wb2 = XLSX.read(e2.target.result, {type: 'binary'});
+                        
+                        // Get first sheet from each workbook
+                        const ws1 = wb1.Sheets[wb1.SheetNames[0]];
+                        const ws2 = wb2.Sheets[wb2.SheetNames[0]];
+                        
+                        // Convert to array of arrays
+                        const data1 = XLSX.utils.sheet_to_json(ws1, {header: 1, defval: ''});
+                        const data2 = XLSX.utils.sheet_to_json(ws2, {header: 1, defval: ''});
+                        
+                        // Create interleaved data
+                        const mixedData = [];
+                        const maxRows = Math.max(data1.length, data2.length);
+                        
+                        for (let i = 0; i < maxRows; i++) {
+                            // Add row from file 1 if it exists
+                            if (i < data1.length && data1[i].some(cell => cell !== '')) {
+                                mixedData.push(data1[i]);
+                            }
+                            
+                            // Add row from file 2 if it exists
+                            if (i < data2.length && data2[i].some(cell => cell !== '')) {
+                                mixedData.push(data2[i]);
+                            }
+                        }
+                        
+                        // Create new workbook
+                        const newWb = XLSX.utils.book_new();
+                        const newWs = XLSX.utils.aoa_to_sheet(mixedData);
+                        XLSX.utils.book_append_sheet(newWb, newWs, 'Mixed Data');
+                        
+                        // Save file
+                        const filename = 'mixed_excel_file.xlsx';
+                        
+                        if (useSavePicker && supportsFileSystemAccess) {
+                            // Convert to blob
+                            const wbout = XLSX.write(newWb, { bookType: 'xlsx', type: 'array' });
+                            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                            
+                            const saved = await saveFileWithPicker(blob, filename);
+                            if (saved === true) {
+                                showStatus(statusDiv, 'Files mixed and saved successfully!', 'success');
+                            } else if (saved === null) {
+                                showStatus(statusDiv, 'Save cancelled', 'info');
+                            } else {
+                                // Fallback to download
+                                XLSX.writeFile(newWb, filename);
+                                showStatus(statusDiv, 'Files mixed successfully! (Downloaded to default folder)', 'success');
+                            }
+                        } else {
+                            XLSX.writeFile(newWb, filename);
+                            showStatus(statusDiv, 'Files mixed successfully!', 'success');
+                        }
+                        
+                    } catch (error) {
+                        showStatus(statusDiv, 'Error mixing files: ' + error.message, 'error');
+                    }
+                };
+                
+                reader2.readAsBinaryString(file2Input.files[0]);
+            };
+            
+            reader1.readAsBinaryString(file1Input.files[0]);
+        }
+        
+        // Status display helper
+        function showStatus(statusDiv, message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+            statusDiv.style.display = 'block';
+            
+            // Auto-hide success and info messages after 5 seconds
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
