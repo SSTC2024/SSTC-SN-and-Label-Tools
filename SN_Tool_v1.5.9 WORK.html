@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSTC Tools v1.5.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .file-label:hover {
+            background-color: #e0e0e0;
+            border-color: #4CAF50;
+        }
+        .file-selected {
+            background-color: #e8f5e9;
+            border-color: #4CAF50;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .save-button {
+            background-color: #2196F3;
+        }
+        .save-button:hover {
+            background-color: #1976D2;
+        }
+        .print-button {
+            background-color: #FF9800;
+        }
+        .print-button:hover {
+            background-color: #F57C00;
+        }
+        .barcode-button {
+            background-color: #9C27B0;
+        }
+        .barcode-button:hover {
+            background-color: #7B1FA2;
+        }
+        .high-res-button {
+            background-color: #F44336;
+        }
+        .high-res-button:hover {
+            background-color: #D32F2F;
+        }
+        .label-100x150-button {
+            background-color: #00BCD4;
+        }
+        .label-100x150-button:hover {
+            background-color: #0097A7;
+        }
+        .label-70x50-button {
+            background-color: #E91E63;
+        }
+        .label-70x50-button:hover {
+            background-color: #C2185B;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .example {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .file-info {
+            font-size: 14px;
+            color: #666;
+            margin-left: 10px;
+        }
+        .browser-note {
+            font-size: 12px;
+            color: #666;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        .button-note {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .button-group > div {
+            display: inline-block;
+        }
+        .button-group > div > button {
+            display: block;
+            width: 100%;
+        }
+        #pdfPreview {
+            display: none;
+            margin-top: 20px;
+        }
+        #qrCanvas {
+            display: none;
+        }
+        .file-list {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .file-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            margin: 3px 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .file-list-item .file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .file-list-item .file-count {
+            color: #666;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .file-list-item .remove-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .file-list-item .remove-btn:hover {
+            background-color: #d32f2f;
+        }
+        .clear-all-btn {
+            background-color: #ff5722;
+            margin-top: 10px;
+        }
+        .clear-all-btn:hover {
+            background-color: #e64a19;
+        }
+    </style>
+</head>
+<body>
+    <h1>Excel Tool Suite v1.5.0</h1>
+    
+    <!-- Serial Number Generator -->
+    <div class="container">
+        <h2>1. Tạo List Series</h2>
+        <div class="form-group">
+            <label for="snModel">Model:</label>
+            <input type="text" id="snModel" placeholder="Enter model name">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="serialNumber">Số Series bắt đầu:</label>
+                <input type="text" id="serialNumber" placeholder="e.g., MS2506R0001">
+                <div class="example">Ví dụ: MS2506R0001 (chỉ có dãy số cuối sẽ tăng)</div>
+            </div>
+            <div class="form-group">
+                <label for="cartonNo">Số thùng Carton:</label>
+                <input type="text" id="cartonNo" placeholder="e.g., CTN001">
+            </div>
+            <div class="form-group">
+                <label for="quantity">Số lượng:</label>
+                <input type="number" id="quantity" min="1" placeholder="e.g., 100">
+            </div>
+        </div>
+        <div class="button-group">
+            <button onclick="generateSerialNumbers()">Tạo list Series</button>
+            <button class="save-button" onclick="generateSerialNumbers(true)">Tạo list Series và lưu...</button>
+            <div style="display: inline-block;">
+                <button class="barcode-button" onclick="createBarcodeSheet('A4', false)">Create A4 Barcode</button>
+                <div class="button-note">168 Codes / Page, Max 3000 Codes / 18 Pages / File</div>
+            </div>
+            <div style="display: inline-block;">
+                <button class="barcode-button" onclick="createBarcodeSheet('A3', false)">Create A3 Barcode</button>
+                <div class="button-note">336 Codes / Page, Max 4816 Codes / 15 Pages / File</div>
+            </div>
+            <button class="high-res-button" onclick="createBarcodeSheet('A4', true)">Create A4 Barcode - High Res</button>
+            <button class="high-res-button" onclick="createBarcodeSheet('A3', true)">Create A3 Barcode - High Res</button>
+        </div>
+        <div id="serialStatus" class="status"></div>
+        <canvas id="barcodeCanvasSN" style="display:none;"></canvas>
+    </div>
+    
+    <!-- Excel File Mixer -->
+    <div class="container">
+        <h2>2. Tạo list Tổng Hợp</h2>
+        <div class="form-group">
+            <label for="file1" class="file-label" id="file1Label">
+                Chọn list Series
+            </label>
+            <input type="file" id="file1" accept=".xlsx,.xls" onchange="handleFileSelect(1)">
+            <span id="file1Info" class="file-info"></span>
+        </div>
+        <div class="form-group">
+            <label for="file2" class="file-label" id="file2Label">
+                Chọn list QR
+            </label>
+            <input type="file" id="file2" accept=".xlsx,.xls" onchange="handleFileSelect(2)">
+            <span id="file2Info" class="file-info"></span>
+        </div>
+        <button onclick="mixExcelFiles()">Tạo List Tổng Hợp</button>
+        <button class="save-button" onclick="mixExcelFiles(true)">Tạo list và lưu..</button>
+        <div id="mixStatus" class="status"></div>
+        
+        <div class="browser-note">
+            <strong>Note:</strong> "Save To..." feature works best in Chrome, Edge, and Opera browsers. Other browsers will download to your default Downloads folder.
+        </div>
+    </div>
+
+    <!-- Create Carton Label -->
+    <div class="container">
+        <h2>3. Tạo nhãn in thùng Carton</h2>
+        <div class="form-group">
+            <label for="productName">Product Name:</label>
+            <input type="text" id="productName" placeholder="Enter product name">
+        </div>
+        <div class="form-group">
+            <label for="model">Model:</label>
+            <input type="text" id="model" placeholder="Enter model name">
+        </div>
+        <div class="form-group">
+            <label for="sku">SKU:</label>
+            <input type="text" id="sku" placeholder="Enter SKU">
+        </div>
+        <div class="form-group">
+            <label for="snListFile" class="file-label" id="snListLabel">
+                Chọn List Series (có thể chọn nhiều file)
+            </label>
+            <input type="file" id="snListFile" accept=".xlsx,.xls" multiple onchange="handleSNListSelect()">
+            <span id="snListInfo" class="file-info"></span>
+            <div class="example">File Excel sẽ nhận hàng đầu tiên của cột là tiêu đề, các hàng còn lại là số Series. Có thể chọn nhiều file cùng lúc.</div>
+            <div id="fileListContainer" class="file-list" style="display: none;">
+                <div id="fileListContent"></div>
+            </div>
+            <button class="clear-all-btn" id="clearAllBtn" style="display: none;" onclick="clearAllFiles()">Xóa tất cả file</button>
+        </div>
+        <div class="button-group">
+            <button onclick="createPDF()">Tạo 2 Label Giống nhau Size A4</button>
+            <button class="save-button" onclick="createPDF(true)">Tạo 2 Label giống nhau và lưu...</button>
+            <button onclick="createPDF2Different()">Tạo 2 Label khác nhau Size A4</button>
+            <button class="save-button" onclick="createPDF2Different(true)">Tạo 2 Label khác nhau và lưu...</button>
+            <div style="display: inline-block;">
+                <button class="label-100x150-button" onclick="createPDF100x150()">Create Carton label 100 x 150mm</button>
+                <div class="button-note">50 Barcodes / Label (Auto split if > 50)</div>
+            </div>
+            <button class="save-button label-100x150-button" onclick="createPDF100x150(true)">Create 100x150mm và lưu...</button>
+            <div style="display: inline-block;">
+                <button class="label-70x50-button" onclick="createPDF70x50()">Create Carton label 70 x 50mm</button>
+                <div class="button-note">12 Serial Numbers / Label (Auto split if > 12)</div>
+            </div>
+            <button class="save-button label-70x50-button" onclick="createPDF70x50(true)">Create 70x50mm và lưu...</button>
+            <button class="print-button" onclick="printPDF()" id="printButton" disabled>In PDF</button>
+        </div>
+        <div id="cartonStatus" class="status"></div>
+        <canvas id="barcodeCanvas" style="display:none;"></canvas>
+        <div id="qrCanvas"></div>
+    </div>
+
+    <script>
+        // Global variables for PDF functionality
+        let currentPDF = null;
+        let serialNumberData = [];
+        let generatedSerialNumbers = [];
+        let totalQuantityAllCartons = 0;
+        let loadedFiles = []; // Store loaded file information
+        
+        // Check if File System Access API is supported
+        const supportsFileSystemAccess = 'showSaveFilePicker' in window;
+
+        // File selection handler
+        function handleFileSelect(fileNum) {
+            const fileInput = document.getElementById(`file${fileNum}`);
+            const fileLabel = document.getElementById(`file${fileNum}Label`);
+            const fileInfo = document.getElementById(`file${fileNum}Info`);
+            
+            if (fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name;
+                fileLabel.classList.add('file-selected');
+                fileLabel.textContent = 'Đã chọn File';
+                fileInfo.textContent = fileName;
+            }
+        }
+
+        // Handle SN List file selection - UPDATED FOR MULTIPLE FILES
+        function handleSNListSelect() {
+            const fileInput = document.getElementById('snListFile');
+            const fileLabel = document.getElementById('snListLabel');
+            const fileInfo = document.getElementById('snListInfo');
+            const fileListContainer = document.getElementById('fileListContainer');
+            const fileListContent = document.getElementById('fileListContent');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const statusDiv = document.getElementById('cartonStatus');
+            
+            if (fileInput.files.length > 0) {
+                const newFiles = Array.from(fileInput.files);
+                
+                fileLabel.classList.add('file-selected');
+                fileLabel.textContent = 'Thêm File';
+                
+                // Process each file
+                let filesProcessed = 0;
+                const totalFiles = newFiles.length;
+                
+                newFiles.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const wb = XLSX.read(e.target.result, {type: 'binary'});
+                            const ws = wb.Sheets[wb.SheetNames[0]];
+                            const data = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ''});
+                            
+                            // Parse columns
+                            if (data.length > 0) {
+                                const headers = data[0];
+                                for (let col = 0; col < headers.length; col++) {
+                                    if (headers[col]) {
+                                        const columnData = {
+                                            title: headers[col],
+                                            serialNumbers: [],
+                                            fileName: file.name
+                                        };
+                                        
+                                        for (let row = 1; row < data.length; row++) {
+                                            if (data[row][col] && data[row][col].toString().trim()) {
+                                                columnData.serialNumbers.push(data[row][col].toString().trim());
+                                            }
+                                        }
+                                        
+                                        if (columnData.serialNumbers.length > 0) {
+                                            serialNumberData.push(columnData);
+                                            totalQuantityAllCartons += columnData.serialNumbers.length;
+                                        }
+                                    }
+                                }
+                                
+                                // Store file info
+                                loadedFiles.push({
+                                    name: file.name,
+                                    columns: headers.filter(h => h).length
+                                });
+                            }
+                            
+                            filesProcessed++;
+                            
+                            // Update UI after all files processed
+                            if (filesProcessed === totalFiles) {
+                                updateFileListUI();
+                                showStatus(statusDiv, 
+                                    `Loaded ${loadedFiles.length} file(s) with ${serialNumberData.length} column(s) and ${totalQuantityAllCartons} total serial numbers`, 'success');
+                            }
+                        } catch (error) {
+                            filesProcessed++;
+                            showStatus(statusDiv, 
+                                'Error reading file ' + file.name + ': ' + error.message, 'error');
+                        }
+                    };
+                    reader.readAsBinaryString(file);
+                });
+                
+                // Clear the input so the same file can be selected again
+                fileInput.value = '';
+            }
+        }
+        
+        // Update the file list UI
+        function updateFileListUI() {
+            const fileListContainer = document.getElementById('fileListContainer');
+            const fileListContent = document.getElementById('fileListContent');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const fileInfo = document.getElementById('snListInfo');
+            
+            if (loadedFiles.length > 0) {
+                fileListContainer.style.display = 'block';
+                clearAllBtn.style.display = 'inline-block';
+                fileInfo.textContent = `${loadedFiles.length} file(s) loaded`;
+                
+                let html = '';
+                loadedFiles.forEach((file, index) => {
+                    const fileData = serialNumberData.filter(d => d.fileName === file.name);
+                    const snCount = fileData.reduce((sum, d) => sum + d.serialNumbers.length, 0);
+                    html += `
+                        <div class="file-list-item">
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-count">${snCount} SN</span>
+                            <button class="remove-btn" onclick="removeFile(${index})">X</button>
+                        </div>
+                    `;
+                });
+                fileListContent.innerHTML = html;
+            } else {
+                fileListContainer.style.display = 'none';
+                clearAllBtn.style.display = 'none';
+                fileInfo.textContent = '';
+                
+                const fileLabel = document.getElementById('snListLabel');
+                fileLabel.classList.remove('file-selected');
+                fileLabel.textContent = 'Chọn List Series (có thể chọn nhiều file)';
+            }
+        }
+        
+        // Remove a specific file
+        function removeFile(index) {
+            const fileName = loadedFiles[index].name;
+            
+            // Remove serial number data for this file
+            serialNumberData = serialNumberData.filter(d => d.fileName !== fileName);
+            
+            // Recalculate total quantity
+            totalQuantityAllCartons = serialNumberData.reduce((sum, d) => sum + d.serialNumbers.length, 0);
+            
+            // Remove from loaded files
+            loadedFiles.splice(index, 1);
+            
+            updateFileListUI();
+            
+            const statusDiv = document.getElementById('cartonStatus');
+            showStatus(statusDiv, 
+                `Removed ${fileName}. ${loadedFiles.length} file(s) remaining with ${totalQuantityAllCartons} serial numbers`, 'info');
+        }
+        
+        // Clear all files
+        function clearAllFiles() {
+            serialNumberData = [];
+            loadedFiles = [];
+            totalQuantityAllCartons = 0;
+            updateFileListUI();
+            
+            const statusDiv = document.getElementById('cartonStatus');
+            showStatus(statusDiv, 'All files cleared', 'info');
+        }
+
+        // Create barcode as base64 image with high resolution for printing
+        function createBarcodeImage(text, canvasId = 'barcodeCanvas', scale = 2) {
+            const canvas = document.getElementById(canvasId);
+            JsBarcode(canvas, text, {
+                format: "CODE128",
+                width: 2.5 * scale,
+                height: 35 * scale,
+                displayValue: false,
+                margin: 0
+            });
+            return canvas.toDataURL('image/png');
+        }
+
+        // Create QR code as base64 image
+        function createQRCodeImage(text, size = 120) {
+            const qrDiv = document.getElementById('qrCanvas');
+            qrDiv.innerHTML = '';
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.style.display = 'inline-block';
+            qrDiv.appendChild(tempDiv);
+            
+            const qr = new QRCode(tempDiv, {
+                text: text,
+                width: size,
+                height: size,
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const img = tempDiv.querySelector('img');
+                    if (img) {
+                        resolve(img.src);
+                    } else {
+                        resolve(null);
+                    }
+                }, 100);
+            });
+        }
+
+        // Generate serial numbers from input
+        function generateSerialNumbersList() {
+            const serialNumber = document.getElementById('serialNumber').value.trim();
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const model = document.getElementById('snModel').value.trim();
+            const cartonNo = document.getElementById('cartonNo').value.trim();
+            
+            if (!serialNumber || !quantity || quantity < 1 || !model || !cartonNo) {
+                return null;
+            }
+            
+            const numberMatches = serialNumber.match(/\d+/g);
+            if (!numberMatches || numberMatches.length === 0) {
+                return null;
+            }
+            
+            let lastNumberIndex = -1;
+            let lastNumberMatch = null;
+            let lastNumberPosition = -1;
+            
+            for (let i = numberMatches.length - 1; i >= 0; i--) {
+                const match = numberMatches[i];
+                const position = serialNumber.lastIndexOf(match);
+                if (position > lastNumberPosition) {
+                    lastNumberIndex = i;
+                    lastNumberMatch = match;
+                    lastNumberPosition = position;
+                }
+            }
+            
+            if (lastNumberMatch === null) {
+                return null;
+            }
+            
+            const numberLength = lastNumberMatch.length;
+            const startNumber = parseInt(lastNumberMatch);
+            const prefix = serialNumber.substring(0, lastNumberPosition);
+            const suffix = serialNumber.substring(lastNumberPosition + numberLength);
+            
+            const numbers = [];
+            for (let i = 0; i < quantity; i++) {
+                const currentNumber = startNumber + i;
+                const paddedNumber = currentNumber.toString().padStart(numberLength, '0');
+                const fullSerial = prefix + paddedNumber + suffix;
+                numbers.push(fullSerial);
+            }
+            
+            return {
+                serialNumbers: numbers,
+                model: model,
+                cartonNo: cartonNo,
+                quantity: quantity,
+                firstSN: serialNumber,
+                lastSN: numbers[numbers.length - 1]
+            };
+        }
+
+        // Create barcode sheet with batch processing
+        async function createBarcodeSheet(pageSize, highRes) {
+            const statusDiv = document.getElementById('serialStatus');
+            const data = generateSerialNumbersList();
+            
+            if (!data) {
+                showStatus(statusDiv, 'Please fill in all fields correctly', 'error');
+                return;
+            }
+            
+            generatedSerialNumbers = data.serialNumbers;
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const isA3 = pageSize === 'A3';
+                
+                let batchLimit;
+                if (isA3) {
+                    batchLimit = highRes ? 2000 : 4816;
+                } else {
+                    batchLimit = highRes ? 1500 : 3000;
+                }
+                
+                const totalQuantity = data.quantity;
+                const numBatches = Math.ceil(totalQuantity / batchLimit);
+                
+                if (numBatches > 1) {
+                    showStatus(statusDiv, `Quantity ${totalQuantity} exceeds limit of ${batchLimit}. Creating ${numBatches} PDF files...`, 'info');
+                }
+                
+                for (let batchNum = 0; batchNum < numBatches; batchNum++) {
+                    const batchStartIdx = batchNum * batchLimit;
+                    const batchEndIdx = Math.min(batchStartIdx + batchLimit, totalQuantity);
+                    const batchQuantity = batchEndIdx - batchStartIdx;
+                    
+                    const batchData = {
+                        serialNumbers: data.serialNumbers.slice(batchStartIdx, batchEndIdx),
+                        model: data.model,
+                        cartonNo: data.cartonNo,
+                        quantity: batchQuantity,
+                        firstSN: data.serialNumbers[batchStartIdx],
+                        lastSN: data.serialNumbers[batchEndIdx - 1],
+                        totalQuantity: totalQuantity,
+                        batchNum: batchNum + 1,
+                        totalBatches: numBatches
+                    };
+                    
+                    const pdf = new jsPDF('p', 'mm', pageSize.toLowerCase());
+                    
+                    const pageWidth = isA3 ? 297 : 210;
+                    const pageHeight = isA3 ? 420 : 297;
+                    const margin = 6;
+                    
+                    const cols = isA3 ? 8 : 6;
+                    const rows = isA3 ? 42 : 28;
+                    const scale = highRes ? 4 : 2;
+                    
+                    const totalPerPage = cols * rows;
+                    const totalPages = Math.ceil(batchData.quantity / totalPerPage);
+                    
+                    const contentTop = margin + 18;
+                    const contentHeight = pageHeight - contentTop - margin;
+                    const usableWidth = pageWidth - 2 * margin;
+                    const cellWidth = usableWidth / cols;
+                    const cellHeight = contentHeight / rows;
+                    const barcodeWidth = cellWidth - 2;
+                    const barcodeHeight = cellHeight * 0.35;
+                    
+                    const barcodeAndTextHeight = barcodeHeight + 2.5 + 1.94;
+                    const lineGap = 1.5;
+                    const totalRowHeight = barcodeAndTextHeight + lineGap;
+                    const topOffset = 0.5;
+                    
+                    const creationDate = new Date().toLocaleDateString('en-US');
+                    
+                    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+                        if (pageNum > 0) pdf.addPage();
+                        
+                        const startIdx = pageNum * totalPerPage;
+                        const endIdx = Math.min(startIdx + totalPerPage, batchData.quantity);
+                        const pageQty = endIdx - startIdx;
+                        
+                        pdf.setFontSize(10);
+                        
+                        const quarterWidth = (pageWidth - 2 * margin) / 4;
+                        
+                        let modelText = `Model: ${batchData.model}`;
+                        if (batchData.totalBatches > 1) {
+                            modelText += ` (Batch ${batchData.batchNum}/${batchData.totalBatches})`;
+                        }
+                        pdf.text(modelText, margin, margin + 8);
+                        
+                        const pageText = `Page: ${pageNum + 1} / ${totalPages}`;
+                        pdf.text(pageText, margin + quarterWidth, margin + 8);
+                        
+                        let qtyText = `Quantity: ${pageQty} / ${batchData.quantity}`;
+                        if (batchData.totalBatches > 1) {
+                            qtyText = `Qty: ${pageQty} / ${batchData.quantity} (Total: ${batchData.totalQuantity})`;
+                        }
+                        pdf.text(qtyText, margin + quarterWidth * 2, margin + 8);
+                        
+                        const dateText = `Creating Date: ${creationDate}`;
+                        pdf.text(dateText, margin + quarterWidth * 3, margin + 8);
+                        
+                        pdf.setFontSize(10);
+                        pdf.text(`Serial Number Range: ${batchData.serialNumbers[startIdx]} - ${batchData.serialNumbers[endIdx - 1]}`, margin, margin + 12);
+                        
+                        const topOffset = 2;
+                        for (let i = startIdx; i < endIdx; i++) {
+                            const localIdx = i - startIdx;
+                            const row = Math.floor(localIdx / cols);
+                            const col = localIdx % cols;
+                            const x = margin + col * cellWidth + 1;
+                            
+                            const y = contentTop + topOffset + row * totalRowHeight;
+                            
+                            const barcodeImage = createBarcodeImage(batchData.serialNumbers[i], 'barcodeCanvasSN', scale);
+                            pdf.addImage(barcodeImage, 'PNG', x, y, barcodeWidth, barcodeHeight);
+                            
+                            pdf.setFontSize(5.5);
+                            pdf.text(batchData.serialNumbers[i], x, y + barcodeHeight + 2.5);
+                        }
+                        
+                        pdf.setDrawColor(0, 0, 0);
+                        pdf.setLineWidth(0.1);
+                        
+                        const actualRows = Math.ceil((endIdx - startIdx) / cols);
+                        const actualCols = Math.min(cols, pageQty);
+                        
+                        const rightBoundary = margin + actualCols * cellWidth;
+                        
+                        pdf.line(margin, contentTop, rightBoundary, contentTop);
+                        
+                        for (let row = 0; row < actualRows - 1; row++) {
+                            const gridY = contentTop + topOffset + (row + 1) * totalRowHeight - lineGap / 0.7;
+                            pdf.line(margin, gridY, rightBoundary, gridY);
+                        }
+                        
+                        const lastY = contentTop + topOffset + actualRows * totalRowHeight;
+                        pdf.line(margin, lastY, rightBoundary, lastY);
+                        
+                        for (let col = 0; col <= actualCols; col++) {
+                            const gridX = margin + col * cellWidth;
+                            const bottomY = contentTop + topOffset + actualRows * totalRowHeight;
+                            pdf.line(gridX, contentTop, gridX, bottomY);
+                        }
+                        
+                        pdf.setDrawColor(0, 0, 0);
+                    }
+                    
+                    const date = new Date().toISOString().split('T')[0];
+                    let filename = `${batchData.model}_${batchData.firstSN}_${batchData.lastSN}_QTY${batchData.quantity}_${date}`;
+                    
+                    if (batchData.totalBatches > 1) {
+                        filename += `_Batch${batchData.batchNum}`;
+                    }
+                    
+                    filename += '.pdf';
+                    
+                    pdf.save(filename);
+                    
+                    if (batchData.totalBatches > 1) {
+                        showStatus(statusDiv, `Batch ${batchData.batchNum}/${batchData.totalBatches} created: ${filename}`, 'success');
+                    } else {
+                        showStatus(statusDiv, `${pageSize} barcode sheet created successfully!`, 'success');
+                    }
+                    
+                    if (batchNum < numBatches - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                }
+                
+                if (numBatches > 1) {
+                    showStatus(statusDiv, `Successfully created ${numBatches} PDF files for ${totalQuantity} barcodes!`, 'success');
+                }
+                
+            } catch (error) {
+                showStatus(statusDiv, 'Error creating barcode sheet: ' + error.message, 'error');
+            }
+        }
+
+        // Create PDF with 2 labels per page
+        async function createPDF(useSavePicker = false) {
+            const productName = document.getElementById('productName').value.trim();
+            const model = document.getElementById('model').value.trim();
+            const sku = document.getElementById('sku').value.trim();
+            const statusDiv = document.getElementById('cartonStatus');
+            
+            if (!productName || !model || !sku) {
+                showStatus(statusDiv, 'Please enter Product Name, Model and SKU', 'error');
+                return;
+            }
+            
+            if (serialNumberData.length === 0) {
+                showStatus(statusDiv, 'Please upload a serial number list', 'error');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = 210;
+                const pageHeight = 297;
+                const margin = 10;
+                
+                const totalPages = serialNumberData.length;
+                
+                const now = new Date();
+                const packingDateForFilename = now.toISOString().split('T')[0];
+                
+                let pageCount = 0;
+                for (let i = 0; i < serialNumberData.length; i++) {
+                    const columnData = serialNumberData[i];
+                    const packingDate = now.toLocaleDateString('en-GB').split('/').join('/');
+                    const packingTime = now.toTimeString().slice(0, 5);
+                    
+                    const pageData = {
+                        productName: productName,
+                        model: model,
+                        sku: sku,
+                        quantity: columnData.serialNumbers.length,
+                        totalQuantity: totalQuantityAllCartons,
+                        cartonNo: columnData.title,
+                        packingDate: packingDate,
+                        packingTime: packingTime,
+                        serialNumbers: columnData.serialNumbers,
+                        currentPage: i + 1,
+                        totalPages: totalPages
+                    };
+                    
+                    if (pageCount > 0) pdf.addPage();
+                    
+                    await createLabelContent(pdf, pageData, pageWidth, pageHeight, margin, 0);
+                    
+                    pdf.setDrawColor(128, 128, 128);
+                    pdf.setLineWidth(0.5);
+                    pdf.setLineDashPattern([5, 5], 0);
+                    const printMarginTop = 2;
+                    const printMarginBottom = 2;
+                    const labelGap = 5;
+                    const usableHeight = pageHeight - printMarginTop - printMarginBottom;
+                    const labelHeight = (usableHeight - labelGap) / 2;
+                    const cutLineY = printMarginTop + labelHeight + labelGap/2;
+                    pdf.line(0, cutLineY, pageWidth, cutLineY);
+                    pdf.setLineDashPattern([], 0);
+                    
+                    await createLabelContent(pdf, pageData, pageWidth, pageHeight, margin, 1);
+                    
+                    pageCount++;
+                }
+                
+                currentPDF = pdf;
+                document.getElementById('printButton').disabled = false;
+                
+                const filename = `${model}_QTY${totalQuantityAllCartons}_${packingDateForFilename}.pdf`;
+                
+                if (useSavePicker && supportsFileSystemAccess) {
+                    const pdfBlob = pdf.output('blob');
+                    
+                    const options = {
+                        suggestedName: filename,
+                        types: [{
+                            description: 'PDF Files',
+                            accept: {
+                                'application/pdf': ['.pdf']
+                            }
+                        }]
+                    };
+                    
+                    try {
+                        const handle = await window.showSaveFilePicker(options);
+                        const writable = await handle.createWritable();
+                        await writable.write(pdfBlob);
+                        await writable.close();
+                        showStatus(statusDiv, 'PDF created and saved successfully!', 'success');
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            pdf.save(filename);
+                            showStatus(statusDiv, 'PDF created successfully! (Downloaded to default folder)', 'success');
+                        } else {
+                            showStatus(statusDiv, 'Save cancelled', 'info');
+                        }
+                    }
+                } else {
+                    pdf.save(filename);
+                    showStatus(statusDiv, 'PDF created successfully!', 'success');
+                }
+                
+            } catch (error) {
+                showStatus(statusDiv, 'Error creating PDF: ' + error.message, 'error');
+            }
+        }
+        
+        // Helper function to create label content with updated layout and formatting
+        async function createLabelContent(pdf, pageData, pageWidth, pageHeight, margin, position) {
+            const printMarginLeft = 1;
+            const printMarginRight = 1;
+            const printMarginTop = 2;
+            const printMarginBottom = 2;
+            
+            const labelGap = 5;
+            const usableHeight = pageHeight - printMarginTop - printMarginBottom;
+            const labelHeight = (usableHeight - labelGap) / 2;
+            const yOffset = printMarginTop + position * (labelHeight + labelGap);
+            
+            const effectiveWidth = pageWidth - printMarginLeft - printMarginRight;
+            
+            const section1Height = 20;
+            pdf.setDrawColor(0);
+            pdf.rect(printMarginLeft, yOffset, effectiveWidth, section1Height);
+            
+            pdf.setFontSize(11);
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Product Name:', printMarginLeft + 3, yOffset + 5);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageData.productName, printMarginLeft + 3 + pdf.getTextWidth('Product Name:') + 2, yOffset + 5);
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Model:', printMarginLeft + 3, yOffset + 10);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageData.model, printMarginLeft + 3 + pdf.getTextWidth('Model:') + 2, yOffset + 10);
+            
+            pdf.setFont(undefined, 'bold');
+            const skuLabelText = 'SKU:';
+            const skuX = (pageWidth - pdf.getTextWidth(skuLabelText) - pdf.getTextWidth(pageData.sku) - 2) / 2;
+            pdf.text(skuLabelText, skuX, yOffset + 10);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageData.sku, skuX + pdf.getTextWidth(skuLabelText) + 2, yOffset + 10);
+            
+            pdf.setFont(undefined, 'bold');
+            const pageLabel = 'Page No:';
+            const pageValue = `${pageData.currentPage} / ${pageData.totalPages}`;
+            const pageFullWidth = pdf.getTextWidth(pageLabel) + pdf.getTextWidth(pageValue) + 2;
+            const pageX = pageWidth - printMarginRight - pageFullWidth - 3;
+            pdf.text(pageLabel, pageX, yOffset + 10);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageValue, pageX + pdf.getTextWidth(pageLabel) + 2, yOffset + 10);
+            
+            const actualQuantity = Math.min(pageData.serialNumbers.length, 60);
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text('QTY:', printMarginLeft + 3, yOffset + 15);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(`${actualQuantity} / ${pageData.totalQuantity}`, printMarginLeft + 3 + pdf.getTextWidth('QTY:') + 2, yOffset + 15);
+            
+            pdf.setFont(undefined, 'bold');
+            const cartonLabel = 'Carton No:';
+            const cartonValue = pageData.cartonNo;
+            const cartonX = (pageWidth - pdf.getTextWidth(cartonLabel) - pdf.getTextWidth(cartonValue) - 2) / 2;
+            pdf.text(cartonLabel, cartonX, yOffset + 15);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(cartonValue, cartonX + pdf.getTextWidth(cartonLabel) + 2, yOffset + 15);
+            
+            pdf.setFont(undefined, 'bold');
+            const packingLabel = 'Packing Date:';
+            const packingValue = `${pageData.packingDate} ${pageData.packingTime}`;
+            const packingFullWidth = pdf.getTextWidth(packingLabel) + pdf.getTextWidth(packingValue) + 2;
+            const packingX = pageWidth - printMarginRight - packingFullWidth - 3;
+            pdf.text(packingLabel, packingX, yOffset + 15);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(packingValue, packingX + pdf.getTextWidth(packingLabel) + 2, yOffset + 15);
+            
+            const section2Top = yOffset + section1Height + 0.2;
+            const section2Height = labelHeight - section1Height - 0.2;
+            
+            const maxPerLabel = 60;
+            const cols = 6;
+            const rows = 10;
+            const cellWidth = effectiveWidth / cols;
+            
+            const qrCodeHeight = 18;
+            const remainingHeight = section2Height - 6 - qrCodeHeight;
+            const regularRows = rows - 1;
+            const cellHeight = remainingHeight / regularRows * 0.95;
+            
+            const barcodeWidth = cellWidth - 2;
+            const barcodeHeight = cellHeight * 0.65;
+            
+            const itemsToShow = Math.min(pageData.serialNumbers.length, maxPerLabel);
+            
+            for (let col = 0; col < cols; col++) {
+                const x = printMarginLeft + col * cellWidth;
+                const y = section2Top + 3;
+                
+                const qrData = [];
+                for (let row = 0; row < rows; row++) {
+                    const idx = row * cols + col;
+                    if (idx < itemsToShow) {
+                        qrData.push(pageData.serialNumbers[idx]);
+                    }
+                }
+                
+                if (qrData.length > 0) {
+                    const qrText = qrData.join('\n');
+                    const qrImage = await createQRCodeImage(qrText);
+                    
+                    if (qrImage) {
+                        const qrSize = Math.min(cellWidth - 2, qrCodeHeight - 2);
+                        pdf.addImage(qrImage, 'PNG', x + (cellWidth - qrSize) / 2, y, qrSize, qrSize);
+                    }
+                }
+            }
+            
+            for (let i = 0; i < itemsToShow; i++) {
+                const row = Math.floor(i / cols);
+                const col = i % cols;
+                const x = printMarginLeft + col * cellWidth + 1;
+                const y = section2Top + 3 + qrCodeHeight + (row * cellHeight);
+                
+                const barcodeImage = createBarcodeImage(pageData.serialNumbers[i], 'barcodeCanvas', 4);
+                pdf.addImage(barcodeImage, 'PNG', x, y, barcodeWidth, barcodeHeight);
+                
+                pdf.setFontSize(6.5);
+                pdf.text(pageData.serialNumbers[i], x, y + barcodeHeight + 2.0);
+            }
+            
+            const actualRows = Math.ceil(itemsToShow / cols);
+            const totalContentHeight = qrCodeHeight + (actualRows * cellHeight) + 6;
+            const adjustedSection2Height = Math.max(section2Height, totalContentHeight);
+            
+            pdf.rect(printMarginLeft, section2Top, effectiveWidth, adjustedSection2Height);
+        }
+
+        // Create PDF with 2 different labels per page
+        async function createPDF2Different(useSavePicker = false) {
+            const productName = document.getElementById('productName').value.trim();
+            const model = document.getElementById('model').value.trim();
+            const sku = document.getElementById('sku').value.trim();
+            const statusDiv = document.getElementById('cartonStatus');
+            
+            if (!productName || !model || !sku) {
+                showStatus(statusDiv, 'Please enter Product Name, Model and SKU', 'error');
+                return;
+            }
+            
+            if (serialNumberData.length === 0) {
+                showStatus(statusDiv, 'Please upload a serial number list', 'error');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = 210;
+                const pageHeight = 297;
+                const margin = 10;
+                
+                const now = new Date();
+                const packingDateForFilename = now.toISOString().split('T')[0];
+                
+                let pageCount = 0;
+                for (let i = 0; i < serialNumberData.length; i += 2) {
+                    if (pageCount > 0) pdf.addPage();
+                    
+                    const firstColumnData = serialNumberData[i];
+                    const packingDate = now.toLocaleDateString('en-GB').split('/').join('/');
+                    const packingTime = now.toTimeString().slice(0, 5);
+                    
+                    const firstLabelData = {
+                        productName: productName,
+                        model: model,
+                        sku: sku,
+                        quantity: firstColumnData.serialNumbers.length,
+                        totalQuantity: totalQuantityAllCartons,
+                        cartonNo: firstColumnData.title,
+                        packingDate: packingDate,
+                        packingTime: packingTime,
+                        serialNumbers: firstColumnData.serialNumbers,
+                        currentPage: i + 1,
+                        totalPages: serialNumberData.length
+                    };
+                    
+                    await createLabelContent(pdf, firstLabelData, pageWidth, pageHeight, margin, 0);
+                    
+                    pdf.setDrawColor(128, 128, 128);
+                    pdf.setLineWidth(0.5);
+                    pdf.setLineDashPattern([5, 5], 0);
+                    const printMarginTop = 2;
+                    const printMarginBottom = 2;
+                    const labelGap = 5;
+                    const usableHeight = pageHeight - printMarginTop - printMarginBottom;
+                    const labelHeight = (usableHeight - labelGap) / 2;
+                    const cutLineY = printMarginTop + labelHeight + labelGap/2;
+                    pdf.line(0, cutLineY, pageWidth, cutLineY);
+                    pdf.setLineDashPattern([], 0);
+                    
+                    if (i + 1 < serialNumberData.length) {
+                        const secondColumnData = serialNumberData[i + 1];
+                        const secondLabelData = {
+                            productName: productName,
+                            model: model,
+                            sku: sku,
+                            quantity: secondColumnData.serialNumbers.length,
+                            totalQuantity: totalQuantityAllCartons,
+                            cartonNo: secondColumnData.title,
+                            packingDate: packingDate,
+                            packingTime: packingTime,
+                            serialNumbers: secondColumnData.serialNumbers,
+                            currentPage: i + 2,
+                            totalPages: serialNumberData.length
+                        };
+                        
+                        await createLabelContent(pdf, secondLabelData, pageWidth, pageHeight, margin, 1);
+                    }
+                    
+                    pageCount++;
+                }
+                
+                currentPDF = pdf;
+                document.getElementById('printButton').disabled = false;
+                
+                const filename = `${model}_QTY${totalQuantityAllCartons}_${packingDateForFilename}_2Different.pdf`;
+                
+                if (useSavePicker && supportsFileSystemAccess) {
+                    const pdfBlob = pdf.output('blob');
+                    
+                    const options = {
+                        suggestedName: filename,
+                        types: [{
+                            description: 'PDF Files',
+                            accept: {
+                                'application/pdf': ['.pdf']
+                            }
+                        }]
+                    };
+                    
+                    try {
+                        const handle = await window.showSaveFilePicker(options);
+                        const writable = await handle.createWritable();
+                        await writable.write(pdfBlob);
+                        await writable.close();
+                        showStatus(statusDiv, 'PDF with 2 different labels created and saved successfully!', 'success');
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            pdf.save(filename);
+                            showStatus(statusDiv, 'PDF with 2 different labels created successfully! (Downloaded to default folder)', 'success');
+                        } else {
+                            showStatus(statusDiv, 'Save cancelled', 'info');
+                        }
+                    }
+                } else {
+                    pdf.save(filename);
+                    showStatus(statusDiv, 'PDF with 2 different labels created successfully!', 'success');
+                }
+                
+            } catch (error) {
+                showStatus(statusDiv, 'Error creating PDF: ' + error.message, 'error');
+            }
+        }
+
+        // NEW FUNCTION: Create PDF with 100x150mm labels - UPDATED TO 50 BARCODES PER LABEL
+        async function createPDF100x150(useSavePicker = false) {
+            const productName = document.getElementById('productName').value.trim();
+            const model = document.getElementById('model').value.trim();
+            const sku = document.getElementById('sku').value.trim();
+            const statusDiv = document.getElementById('cartonStatus');
+            
+            if (!productName || !model || !sku) {
+                showStatus(statusDiv, 'Please enter Product Name, Model and SKU', 'error');
+                return;
+            }
+            
+            if (serialNumberData.length === 0) {
+                showStatus(statusDiv, 'Please upload a serial number list', 'error');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('l', 'mm', [100, 150]);
+                const pageWidth = 150;
+                const pageHeight = 100;
+                const margin = 10;
+                
+                const now = new Date();
+                const packingDateForFilename = now.toISOString().split('T')[0];
+                
+                const MAX_PER_LABEL = 50; // Changed from 60 to 50
+                
+                // Process all serial numbers and split into labels of 50
+                let allLabels = [];
+                
+                for (let i = 0; i < serialNumberData.length; i++) {
+                    const columnData = serialNumberData[i];
+                    const serialNumbers = columnData.serialNumbers;
+                    const fileTotalSerials = serialNumbers.length; // Total serials in this file
+                    
+                    // Get filename without extension for CTN No
+                    const fileName = columnData.fileName || columnData.title;
+                    const fileNameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
+                    
+                    // Split into chunks of 50
+                    const numLabels = Math.ceil(serialNumbers.length / MAX_PER_LABEL);
+                    
+                    for (let labelNum = 0; labelNum < numLabels; labelNum++) {
+                        const startIdx = labelNum * MAX_PER_LABEL;
+                        const endIdx = Math.min(startIdx + MAX_PER_LABEL, serialNumbers.length);
+                        const labelSerials = serialNumbers.slice(startIdx, endIdx);
+                        
+                        // Use full filename, append label number only if more than 50 serials
+                        let ctnNoValue = fileNameWithoutExt;
+                        if (numLabels > 1) {
+                            ctnNoValue = `${fileNameWithoutExt} ${labelNum + 1}/${numLabels}`;
+                        }
+                        
+                        allLabels.push({
+                            title: ctnNoValue,
+                            serialNumbers: labelSerials,
+                            originalCarton: columnData.title,
+                            labelIndex: labelNum + 1,
+                            totalLabelsForCarton: numLabels,
+                            fileTotalSerials: fileTotalSerials // Add file total serials
+                        });
+                    }
+                }
+                
+                const totalPages = allLabels.length;
+                
+                for (let i = 0; i < allLabels.length; i++) {
+                    const labelData = allLabels[i];
+                    const packingDate = now.toLocaleDateString('en-GB').split('/').join('/');
+                    const packingTime = now.toTimeString().slice(0, 5);
+                    
+                    const pageData = {
+                        productName: productName,
+                        model: model,
+                        sku: sku,
+                        quantity: labelData.serialNumbers.length,
+                        totalQuantity: totalQuantityAllCartons,
+                        fileTotalSerials: labelData.fileTotalSerials, // Total serials in this file
+                        cartonNo: labelData.title,
+                        packingDate: packingDate,
+                        packingTime: packingTime,
+                        serialNumbers: labelData.serialNumbers,
+                        currentPage: i + 1,
+                        totalPages: totalPages
+                    };
+                    
+                    if (i > 0) pdf.addPage();
+                    
+                    await createLabelContent100x150(pdf, pageData, pageWidth, pageHeight, margin);
+                }
+                
+                currentPDF = pdf;
+                document.getElementById('printButton').disabled = false;
+                
+                const filename = `${model}_QTY${totalQuantityAllCartons}_${packingDateForFilename}_100x150mm.pdf`;
+                
+                if (useSavePicker && supportsFileSystemAccess) {
+                    const pdfBlob = pdf.output('blob');
+                    
+                    const options = {
+                        suggestedName: filename,
+                        types: [{
+                            description: 'PDF Files',
+                            accept: {
+                                'application/pdf': ['.pdf']
+                            }
+                        }]
+                    };
+                    
+                    try {
+                        const handle = await window.showSaveFilePicker(options);
+                        const writable = await handle.createWritable();
+                        await writable.write(pdfBlob);
+                        await writable.close();
+                        showStatus(statusDiv, `PDF with ${totalPages} label(s) of 100x150mm created and saved successfully!`, 'success');
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            pdf.save(filename);
+                            showStatus(statusDiv, `PDF with ${totalPages} label(s) of 100x150mm created successfully! (Downloaded to default folder)`, 'success');
+                        } else {
+                            showStatus(statusDiv, 'Save cancelled', 'info');
+                        }
+                    }
+                } else {
+                    pdf.save(filename);
+                    showStatus(statusDiv, `PDF with ${totalPages} label(s) of 100x150mm created successfully!`, 'success');
+                }
+                
+            } catch (error) {
+                showStatus(statusDiv, 'Error creating PDF: ' + error.message, 'error');
+            }
+        }
+
+        // Helper function to create label content for 100x150mm size - UPDATED FOR 50 BARCODES
+        async function createLabelContent100x150(pdf, pageData, pageWidth, pageHeight, margin) {
+            const printMarginLeft = 1;
+            const printMarginRight = 1;
+            const printMarginTop = 2;
+            const printMarginBottom = 2;
+            
+            const originalLabelWidth = 208;
+            const originalLabelHeight = 145.5;
+            
+            const newLabelWidth = pageWidth - printMarginLeft - printMarginRight;
+            const newLabelHeight = pageHeight - printMarginTop - printMarginBottom;
+            
+            const scaleX = newLabelWidth / originalLabelWidth;
+            const scaleY = newLabelHeight / originalLabelHeight;
+            const scaleFactor = Math.min(scaleX, scaleY) * 1.1;
+            
+            const section1Height = 20 * scaleFactor;
+            const fontSize1 = 11 * scaleFactor;
+            const fontSize2 = 6.5 * scaleFactor;
+            
+            pdf.setDrawColor(0);
+            pdf.rect(printMarginLeft, printMarginTop, newLabelWidth, section1Height);
+            
+            pdf.setFontSize(fontSize1);
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Product Name:', printMarginLeft + 3, printMarginTop + 5 * scaleFactor);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageData.productName, printMarginLeft + 3 + pdf.getTextWidth('Product Name:') + 2, printMarginTop + 5 * scaleFactor);
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Model:', printMarginLeft + 3, printMarginTop + 10 * scaleFactor);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageData.model, printMarginLeft + 3 + pdf.getTextWidth('Model:') + 2, printMarginTop + 10 * scaleFactor);
+            
+            pdf.setFont(undefined, 'bold');
+            const skuLabelText = 'SKU:';
+            const skuX = (pageWidth - pdf.getTextWidth(skuLabelText) - pdf.getTextWidth(pageData.sku) - 2) / 2;
+            pdf.text(skuLabelText, skuX, printMarginTop + 10 * scaleFactor);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageData.sku, skuX + pdf.getTextWidth(skuLabelText) + 2, printMarginTop + 10 * scaleFactor);
+            
+            pdf.setFont(undefined, 'bold');
+            const pageLabel = 'Page No:';
+            const pageValue = `${pageData.currentPage} / ${pageData.totalPages}`;
+            const pageFullWidth = pdf.getTextWidth(pageLabel) + pdf.getTextWidth(pageValue) + 2;
+            const pageX = pageWidth - printMarginRight - pageFullWidth - 3;
+            pdf.text(pageLabel, pageX, printMarginTop + 10 * scaleFactor);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(pageValue, pageX + pdf.getTextWidth(pageLabel) + 2, printMarginTop + 10 * scaleFactor);
+            
+            const actualQuantity = Math.min(pageData.serialNumbers.length, 50); // Changed to 50
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text('QTY:', printMarginLeft + 3, printMarginTop + 15 * scaleFactor);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(`${actualQuantity} / ${pageData.fileTotalSerials}`, printMarginLeft + 3 + pdf.getTextWidth('QTY:') + 2, printMarginTop + 15 * scaleFactor);
+            
+            pdf.setFont(undefined, 'bold');
+            const cartonLabel = 'CTN No:';
+            const cartonValue = pageData.cartonNo;
+            const cartonX = (pageWidth - pdf.getTextWidth(cartonLabel) - pdf.getTextWidth(cartonValue) - 2) / 2;
+            pdf.text(cartonLabel, cartonX, printMarginTop + 15 * scaleFactor);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(cartonValue, cartonX + pdf.getTextWidth(cartonLabel) + 2, printMarginTop + 15 * scaleFactor);
+            
+            pdf.setFont(undefined, 'bold');
+            const packingLabel = 'Packing Date:';
+            const packingValue = `${pageData.packingDate} ${pageData.packingTime}`;
+            const packingFullWidth = pdf.getTextWidth(packingLabel) + pdf.getTextWidth(packingValue) + 2;
+            const packingX = pageWidth - printMarginRight - packingFullWidth - 3;
+            pdf.text(packingLabel, packingX, printMarginTop + 15 * scaleFactor);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(packingValue, packingX + pdf.getTextWidth(packingLabel) + 2, printMarginTop + 15 * scaleFactor);
+            
+            const section2Top = printMarginTop + section1Height + 0.2 * scaleFactor;
+            const section2Height = newLabelHeight - section1Height - 0.2 * scaleFactor;
+            
+            // Layout for 50 items: 5 columns x 10 rows (5 QR + 50 barcodes arrangement)
+            const maxPerLabel = 50;
+            const cols = 5; // Changed from 6 to 5
+            const rows = 10;
+            const cellWidth = newLabelWidth / cols;
+            
+            const qrCodeHeight = 18 * scaleFactor;
+            const remainingHeight = section2Height - 6 - qrCodeHeight;
+            const regularRows = rows - 1;
+            const cellHeight = remainingHeight / regularRows * 0.95;
+            
+            const barcodeWidth = cellWidth - 2;
+            const barcodeHeight = cellHeight * 0.65;
+            
+            const itemsToShow = Math.min(pageData.serialNumbers.length, maxPerLabel);
+            
+            // Generate QR codes for each column (5 QR codes, each containing 10 barcodes)
+            for (let col = 0; col < cols; col++) {
+                const x = printMarginLeft + col * cellWidth;
+                const y = section2Top + 3;
+                
+                const qrData = [];
+                for (let row = 0; row < rows; row++) {
+                    const idx = row * cols + col;
+                    if (idx < itemsToShow) {
+                        qrData.push(pageData.serialNumbers[idx]);
+                    }
+                }
+                
+                if (qrData.length > 0) {
+                    const qrText = qrData.join('\n');
+                    const qrImage = await createQRCodeImage(qrText);
+                    
+                    if (qrImage) {
+                        const qrSize = Math.min(cellWidth - 2, qrCodeHeight - 2);
+                        pdf.addImage(qrImage, 'PNG', x + (cellWidth - qrSize) / 2, y, qrSize, qrSize);
+                    }
+                }
+            }
+            
+            for (let i = 0; i < itemsToShow; i++) {
+                const row = Math.floor(i / cols);
+                const col = i % cols;
+                const x = printMarginLeft + col * cellWidth + 1;
+                const y = section2Top + 3 + qrCodeHeight + (row * cellHeight);
+                
+                const barcodeImage = createBarcodeImage(pageData.serialNumbers[i], 'barcodeCanvas', Math.max(3, Math.round(4 * scaleFactor)));
+                pdf.addImage(barcodeImage, 'PNG', x, y, barcodeWidth, barcodeHeight);
+                
+                pdf.setFontSize(fontSize2);
+                pdf.text(pageData.serialNumbers[i], x, y + barcodeHeight + 2.0 * scaleFactor);
+            }
+            
+            const actualRows = Math.ceil(itemsToShow / cols);
+            const totalContentHeight = qrCodeHeight + (actualRows * cellHeight) + 6;
+            const adjustedSection2Height = Math.max(section2Height, totalContentHeight);
+            
+            pdf.rect(printMarginLeft, section2Top, newLabelWidth, adjustedSection2Height);
+        }
+
+        // NEW FUNCTION: Create PDF with 70x50mm labels - 12 serial numbers per label
+        async function createPDF70x50(useSavePicker = false) {
+            const productName = document.getElementById('productName').value.trim();
+            const model = document.getElementById('model').value.trim();
+            const statusDiv = document.getElementById('cartonStatus');
+            
+            if (!productName || !model) {
+                showStatus(statusDiv, 'Please enter Product Name and Model', 'error');
+                return;
+            }
+            
+            if (serialNumberData.length === 0) {
+                showStatus(statusDiv, 'Please upload a serial number list', 'error');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                // Create PDF with custom size: width 70mm x height 50mm (landscape orientation)
+                const pdf = new jsPDF('l', 'mm', [50, 70]);
+                const pageWidth = 70;
+                const pageHeight = 50;
+                
+                const now = new Date();
+                const packingDateForFilename = now.toISOString().split('T')[0];
+                
+                const MAX_PER_LABEL = 12; // 12 serial numbers per label
+                
+                // Process all serial numbers and split into labels of 12
+                let allLabels = [];
+                
+                for (let i = 0; i < serialNumberData.length; i++) {
+                    const columnData = serialNumberData[i];
+                    const serialNumbers = columnData.serialNumbers;
+                    
+                    // Split into chunks of 12
+                    const numLabels = Math.ceil(serialNumbers.length / MAX_PER_LABEL);
+                    
+                    for (let labelNum = 0; labelNum < numLabels; labelNum++) {
+                        const startIdx = labelNum * MAX_PER_LABEL;
+                        const endIdx = Math.min(startIdx + MAX_PER_LABEL, serialNumbers.length);
+                        const labelSerials = serialNumbers.slice(startIdx, endIdx);
+                        
+                        allLabels.push({
+                            title: columnData.title + (numLabels > 1 ? ` (${labelNum + 1}/${numLabels})` : ''),
+                            serialNumbers: labelSerials,
+                            originalCarton: columnData.title,
+                            labelIndex: labelNum + 1,
+                            totalLabelsForCarton: numLabels,
+                            fileName: columnData.fileName || ''
+                        });
+                    }
+                }
+                
+                const totalPages = allLabels.length;
+                
+                for (let i = 0; i < allLabels.length; i++) {
+                    const labelData = allLabels[i];
+                    
+                    const pageData = {
+                        productName: productName,
+                        model: model,
+                        serialNumbers: labelData.serialNumbers,
+                        cartonNo: labelData.title,
+                        currentPage: i + 1,
+                        totalPages: totalPages,
+                        fileName: labelData.fileName
+                    };
+                    
+                    if (i > 0) pdf.addPage();
+                    
+                    await createLabelContent70x50(pdf, pageData, pageWidth, pageHeight);
+                }
+                
+                currentPDF = pdf;
+                document.getElementById('printButton').disabled = false;
+                
+                const filename = `${model}_QTY${totalQuantityAllCartons}_${packingDateForFilename}_70x50mm.pdf`;
+                
+                if (useSavePicker && supportsFileSystemAccess) {
+                    const pdfBlob = pdf.output('blob');
+                    
+                    const options = {
+                        suggestedName: filename,
+                        types: [{
+                            description: 'PDF Files',
+                            accept: {
+                                'application/pdf': ['.pdf']
+                            }
+                        }]
+                    };
+                    
+                    try {
+                        const handle = await window.showSaveFilePicker(options);
+                        const writable = await handle.createWritable();
+                        await writable.write(pdfBlob);
+                        await writable.close();
+                        showStatus(statusDiv, `PDF with ${totalPages} label(s) of 70x50mm created and saved successfully!`, 'success');
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            pdf.save(filename);
+                            showStatus(statusDiv, `PDF with ${totalPages} label(s) of 70x50mm created successfully! (Downloaded to default folder)`, 'success');
+                        } else {
+                            showStatus(statusDiv, 'Save cancelled', 'info');
+                        }
+                    }
+                } else {
+                    pdf.save(filename);
+                    showStatus(statusDiv, `PDF with ${totalPages} label(s) of 70x50mm created successfully!`, 'success');
+                }
+                
+            } catch (error) {
+                showStatus(statusDiv, 'Error creating PDF: ' + error.message, 'error');
+            }
+        }
+
+        // Helper function to create label content for 70x50mm size
+        async function createLabelContent70x50(pdf, pageData, pageWidth, pageHeight) {
+            // Label dimensions: width 70mm x height 50mm
+            // Area 1: 70mm x 11mm (empty - for die-cut or margin at top)
+            // Area 2: 66mm x 39mm (content area with border, centered)
+            
+            const area1Height = 11; // Empty area at top
+            const contentWidth = 66; // Content width as specified
+            const contentHeight = 39; // Content height as specified
+            const marginLeft = (pageWidth - contentWidth) / 2; // Center horizontally: 2mm each side
+            const contentTop = area1Height;
+            
+            // Layout calculations - 6 rows x 2 columns
+            const cols = 2;
+            const rows = 6;
+            const cellWidth = contentWidth / cols; // 33mm per column
+            
+            // QR code section at bottom - increased by 6mm (from 10 to 16)
+            const qrSize = 16; // QR code size increased for better scanning
+            const qrCols = 2; // 2 QR codes
+            
+            // Header row: Product Name, Package, Model
+            const headerHeight = 4;
+            const borderTopMargin = 2; // 2mm top margin from border to header
+            const borderBottomMargin = 2; // 2mm below QR code (keep same)
+            
+            // Calculate border position - header at top with 2mm margin
+            const newBorderTop = contentTop;
+            const headerY = newBorderTop + borderTopMargin;
+            
+            // Calculate QR position from bottom
+            const qrBottom = contentTop + contentHeight - borderBottomMargin;
+            const qrTop = qrBottom - qrSize;
+            
+            // Gap between last serial row and QR (keep same as before)
+            const gapToQR = 1;
+            
+            // Serial numbers area - between header and QR codes
+            const serialsTop = headerY + headerHeight + 1;
+            const serialsBottom = qrTop - gapToQR;
+            const serialsHeight = serialsBottom - serialsTop;
+            
+            // Cell height reduced by 0.1mm per row (was 0.4mm, increased by 0.3mm)
+            const rowSpacingReduction = 0.1; // Reduce 0.1mm between each row
+            const cellHeight = (serialsHeight / rows) - rowSpacingReduction;
+            
+            // Border height
+            const newBorderHeight = contentHeight;
+            
+            // Draw border for content area
+            pdf.setDrawColor(0);
+            pdf.setLineWidth(0.3);
+            pdf.rect(marginLeft, newBorderTop, contentWidth, newBorderHeight);
+            
+            pdf.setFontSize(5);
+            pdf.setFont(undefined, 'bold');
+            
+            // Product Name on left
+            const productText = pageData.productName;
+            pdf.text(productText, marginLeft + 1, headerY + 3);
+            
+            // Extract CTN & QTY from fileName (pattern: CTNxx-xxpcs)
+            let ctnQtyText = '';
+            if (pageData.fileName) {
+                // Remove file extension first
+                const fileNameWithoutExt = pageData.fileName.replace(/\.[^/.]+$/, '');
+                // Match pattern like CTN01-13pcs, CTN02-16pcs, CTN103-16pcs
+                const ctnMatch = fileNameWithoutExt.match(/^(CTN\d+-\d+pcs)/i);
+                if (ctnMatch) {
+                    ctnQtyText = ctnMatch[1];
+                }
+            }
+            
+            // CTN & QTY in center (Package info)
+            if (ctnQtyText) {
+                const ctnQtyWidth = pdf.getTextWidth(ctnQtyText);
+                const centerX = marginLeft + (contentWidth / 2) - (ctnQtyWidth / 2);
+                pdf.text(ctnQtyText, centerX, headerY + 3);
+            }
+            
+            // Model on right
+            const modelText = `Model: ${pageData.model}`;
+            const modelWidth = pdf.getTextWidth(modelText);
+            pdf.text(modelText, marginLeft + contentWidth - modelWidth - 1, headerY + 3);
+            
+            pdf.setFont(undefined, 'bold'); // Bold for better print clarity
+            pdf.setFontSize(4.5); // Increased font size for better visibility
+            
+            // Draw serial numbers in 6 rows x 2 columns
+            const itemsToShow = Math.min(pageData.serialNumbers.length, 12);
+            
+            for (let i = 0; i < itemsToShow; i++) {
+                const row = Math.floor(i / cols);
+                const col = i % cols;
+                
+                const x = marginLeft + col * cellWidth + (cellWidth / 2);
+                const y = serialsTop + row * cellHeight + (cellHeight / 2);
+                
+                // Center align serial number in cell
+                const text = pageData.serialNumbers[i];
+                const textWidth = pdf.getTextWidth(text);
+                const textX = x - textWidth / 2;
+                
+                // Draw text multiple times with slight offset for extra bold effect
+                pdf.text(text, textX, y);
+                pdf.text(text, textX + 0.05, y); // Slight horizontal offset for bolder appearance
+                pdf.text(text, textX, y + 0.05); // Slight vertical offset for bolder appearance
+            }
+            
+            // QR Code row: 2 QR codes at the bottom
+            // Each QR code contains 6 serial numbers from its column
+            const qrCellWidth = contentWidth / qrCols;
+            for (let col = 0; col < qrCols; col++) {
+                // Collect 6 serial numbers for this column (all rows of this column)
+                const qrData = [];
+                for (let row = 0; row < rows; row++) {
+                    const idx = row * cols + col;
+                    if (idx < itemsToShow) {
+                        qrData.push(pageData.serialNumbers[idx]);
+                    }
+                }
+                
+                if (qrData.length > 0) {
+                    const qrText = qrData.join('\n');
+                    const qrImage = await createQRCodeImage(qrText, 200); // Increased resolution for larger QR
+                    
+                    if (qrImage) {
+                        const x = marginLeft + col * qrCellWidth + (qrCellWidth - qrSize) / 2;
+                        pdf.addImage(qrImage, 'PNG', x, qrTop, qrSize, qrSize);
+                    }
+                }
+            }
+        }
+
+        // Print PDF
+        function printPDF() {
+            if (currentPDF) {
+                currentPDF.autoPrint();
+                const pdfBlob = currentPDF.output('blob');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                const printWindow = window.open(pdfUrl);
+                
+                if (printWindow) {
+                    printWindow.onload = function() {
+                        printWindow.print();
+                    };
+                }
+            }
+        }
+
+        // Save file with File System Access API
+        async function saveFileWithPicker(blob, suggestedName) {
+            try {
+                const options = {
+                    suggestedName: suggestedName,
+                    types: [{
+                        description: 'Excel Files',
+                        accept: {
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+                        }
+                    }]
+                };
+                
+                const handle = await window.showSaveFilePicker(options);
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                
+                return true;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Save failed:', err);
+                    return false;
+                }
+                return null;
+            }
+        }
+
+        // Fallback save method
+        function saveFileWithDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Serial Number Generator Function
+        async function generateSerialNumbers(useSavePicker = false) {
+            const statusDiv = document.getElementById('serialStatus');
+            const data = generateSerialNumbersList();
+            
+            if (!data) {
+                showStatus(statusDiv, 'Please fill in all fields correctly', 'error');
+                return;
+            }
+            
+            try {
+                const wb = XLSX.utils.book_new();
+                const sheetData = [];
+                
+                sheetData.push([data.firstSN, `${data.model} ${data.quantity}`]);
+                
+                for (let i = 0; i < data.serialNumbers.length; i++) {
+                    sheetData.push([data.serialNumbers[i]]);
+                }
+                
+                const ws = XLSX.utils.aoa_to_sheet(sheetData);
+                XLSX.utils.book_append_sheet(wb, ws, 'Serial Numbers');
+                
+                const date = new Date().toISOString().split('T')[0];
+                const filename = `${data.cartonNo}_${data.model}_${data.firstSN}_QTY${data.quantity}_${date}.xlsx`;
+                
+                if (useSavePicker && supportsFileSystemAccess) {
+                    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    
+                    const saved = await saveFileWithPicker(blob, filename);
+                    if (saved === true) {
+                        showStatus(statusDiv, `Successfully saved ${data.quantity} serial numbers!`, 'success');
+                    } else if (saved === null) {
+                        showStatus(statusDiv, 'Save cancelled', 'info');
+                    } else {
+                        XLSX.writeFile(wb, filename);
+                        showStatus(statusDiv, `Successfully generated ${data.quantity} serial numbers! (Downloaded to default folder)`, 'success');
+                    }
+                } else {
+                    XLSX.writeFile(wb, filename);
+                    showStatus(statusDiv, `Successfully generated ${data.quantity} serial numbers!`, 'success');
+                }
+                
+                generatedSerialNumbers = data.serialNumbers;
+                
+            } catch (error) {
+                showStatus(statusDiv, 'Error generating serial numbers: ' + error.message, 'error');
+            }
+        }
+        
+        // Excel File Mixer Function
+        async function mixExcelFiles(useSavePicker = false) {
+            const file1Input = document.getElementById('file1');
+            const file2Input = document.getElementById('file2');
+            const statusDiv = document.getElementById('mixStatus');
+            
+            if (!file1Input.files[0] || !file2Input.files[0]) {
+                showStatus(statusDiv, 'Please select both Excel files', 'error');
+                return;
+            }
+            
+            const reader1 = new FileReader();
+            const reader2 = new FileReader();
+            
+            reader1.onload = function(e1) {
+                reader2.onload = async function(e2) {
+                    try {
+                        const wb1 = XLSX.read(e1.target.result, {type: 'binary'});
+                        const wb2 = XLSX.read(e2.target.result, {type: 'binary'});
+                        
+                        const ws1 = wb1.Sheets[wb1.SheetNames[0]];
+                        const ws2 = wb2.Sheets[wb2.SheetNames[0]];
+                        
+                        const data1 = XLSX.utils.sheet_to_json(ws1, {header: 1, defval: ''});
+                        const data2 = XLSX.utils.sheet_to_json(ws2, {header: 1, defval: ''});
+                        
+                        const mixedData = [];
+                        const maxRows = Math.max(data1.length, data2.length);
+                        
+                        for (let i = 0; i < maxRows; i++) {
+                            if (i < data1.length && data1[i].some(cell => cell !== '')) {
+                                mixedData.push(data1[i]);
+                            }
+                            
+                            if (i < data2.length && data2[i].some(cell => cell !== '')) {
+                                mixedData.push(data2[i]);
+                            }
+                        }
+                        
+                        const newWb = XLSX.utils.book_new();
+                        const newWs = XLSX.utils.aoa_to_sheet(mixedData);
+                        XLSX.utils.book_append_sheet(newWb, newWs, 'Mixed Data');
+                        
+                        const filename = 'mixed_excel_file.xlsx';
+                        
+                        if (useSavePicker && supportsFileSystemAccess) {
+                            const wbout = XLSX.write(newWb, { bookType: 'xlsx', type: 'array' });
+                            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                            
+                            const saved = await saveFileWithPicker(blob, filename);
+                            if (saved === true) {
+                                showStatus(statusDiv, 'Files mixed and saved successfully!', 'success');
+                            } else if (saved === null) {
+                                showStatus(statusDiv, 'Save cancelled', 'info');
+                            } else {
+                                XLSX.writeFile(newWb, filename);
+                                showStatus(statusDiv, 'Files mixed successfully! (Downloaded to default folder)', 'success');
+                            }
+                        } else {
+                            XLSX.writeFile(newWb, filename);
+                            showStatus(statusDiv, 'Files mixed successfully!', 'success');
+                        }
+                        
+                    } catch (error) {
+                        showStatus(statusDiv, 'Error mixing files: ' + error.message, 'error');
+                    }
+                };
+                
+                reader2.readAsBinaryString(file2Input.files[0]);
+            };
+            
+            reader1.readAsBinaryString(file1Input.files[0]);
+        }
+        
+        // Status display helper
+        function showStatus(statusDiv, message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+            statusDiv.style.display = 'block';
+            
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
