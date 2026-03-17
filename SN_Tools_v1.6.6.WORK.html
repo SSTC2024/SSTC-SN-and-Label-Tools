@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSTC Tools v1.6.4</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
+        .container { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { color: #333; text-align: center; margin-bottom: 30px; }
+        h2 { color: #555; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .form-row .form-group { flex: 1; margin-bottom: 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; transition: border-color 0.3s; }
+        input[type="text"]:focus, input[type="number"]:focus { outline: none; border-color: #4CAF50; }
+        input[type="file"] { display: none; }
+        .file-label { display: inline-block; padding: 10px 20px; background-color: #f0f0f0; border: 2px solid #ddd; border-radius: 5px; cursor: pointer; transition: all 0.3s; }
+        .file-label:hover { background-color: #e0e0e0; border-color: #4CAF50; }
+        .file-selected { background-color: #e8f5e9; border-color: #4CAF50; }
+        button { background-color: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background-color 0.3s; margin-right: 10px; margin-bottom: 10px; }
+        button:hover { background-color: #45a049; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .save-button { background-color: #2196F3; }
+        .save-button:hover { background-color: #1976D2; }
+        .print-button { background-color: #FF9800; }
+        .print-button:hover { background-color: #F57C00; }
+        .barcode-button { background-color: #9C27B0; }
+        .barcode-button:hover { background-color: #7B1FA2; }
+        .high-res-button { background-color: #F44336; }
+        .high-res-button:hover { background-color: #D32F2F; }
+        .label-100x150-button { background-color: #00BCD4; }
+        .label-100x150-button:hover { background-color: #0097A7; }
+        .label-70x50-button { background-color: #E91E63; }
+        .label-70x50-button:hover { background-color: #C2185B; }
+        .label-100x150-1file-button { background-color: #009688; }
+        .label-100x150-1file-button:hover { background-color: #00796B; }
+        .label-70x50-psu-button { background-color: #5C6BC0; }
+        .label-70x50-psu-button:hover { background-color: #3949AB; }
+        .label-nobc-button { background-color: #FF6F00; }
+        .label-nobc-button:hover { background-color: #E65100; }
+        .ctn-list-button { background-color: #43A047; }
+        .ctn-list-button:hover { background-color: #2E7D32; }
+        .status { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; }
+        .status.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .example { font-size: 14px; color: #666; margin-top: 5px; }
+        .file-info { font-size: 14px; color: #666; margin-left: 10px; }
+        .browser-note { font-size: 12px; color: #666; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 10px; }
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
+        .button-note { font-size: 11px; color: #666; margin-top: 2px; text-align: center; white-space: nowrap; }
+        .button-group > div { display: inline-block; }
+        .button-group > div > button { display: block; width: 100%; }
+        #qrCanvas { display: none; }
+        .file-list { margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-radius: 5px; max-height: 150px; overflow-y: auto; }
+        .file-list-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; margin: 3px 0; background-color: #fff; border: 1px solid #ddd; border-radius: 3px; }
+        .file-list-item .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-list-item .file-count { color: #666; font-size: 12px; margin-left: 10px; }
+        .file-list-item .remove-btn { background-color: #f44336; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 10px; }
+        .file-list-item .remove-btn:hover { background-color: #d32f2f; }
+        .clear-all-btn { background-color: #ff5722; margin-top: 10px; }
+        .clear-all-btn:hover { background-color: #e64a19; }
+    </style>
+</head>
+<body>
+    <h1>Excel Tool Suite v1.6.4</h1>
+
+    <div class="container">
+        <h2>1. Tạo List Series</h2>
+        <div class="form-group"><label for="snModel">Model:</label><input type="text" id="snModel" placeholder="Enter model name"></div>
+        <div class="form-row">
+            <div class="form-group"><label for="serialNumber">Số Series bắt đầu:</label><input type="text" id="serialNumber" placeholder="e.g., MS2506R0001"><div class="example">Ví dụ: MS2506R0001 (chỉ có dãy số cuối sẽ tăng)</div></div>
+            <div class="form-group"><label for="cartonNo">Series / CTN:</label><input type="number" id="cartonNo" min="1" placeholder="e.g., 50"><div class="example">Số serial number trong 1 thùng (CTN). VD: 50 → mỗi CTN chứa 50 SN</div></div>
+            <div class="form-group"><label for="quantity">Số lượng:</label><input type="number" id="quantity" min="1" placeholder="e.g., 100"></div>
+        </div>
+        <div class="button-group">
+            <button onclick="generateSerialNumbers()">Tạo list Series</button>
+            <button class="save-button" onclick="generateSerialNumbers(true)">Tạo list Series và lưu...</button>
+            <div>
+                <button class="ctn-list-button" onclick="generateSNForCTN()">Tạo list SN cho CTN</button>
+                <div class="button-note">Tạo Excel nhiều cột — mỗi cột = 1 CTN, số SN/CTN = Series/CTN</div>
+            </div>
+            <button class="save-button ctn-list-button" onclick="generateSNForCTN(true)">Tạo list SN cho CTN và lưu...</button>
+            <div><button class="barcode-button" onclick="createBarcodeSheet('A4',false)">Create A4 Barcode</button><div class="button-note">168 Codes / Page, Max 3000 Codes / 18 Pages / File</div></div>
+            <div><button class="barcode-button" onclick="createBarcodeSheet('A3',false)">Create A3 Barcode</button><div class="button-note">336 Codes / Page, Max 4816 Codes / 15 Pages / File</div></div>
+            <button class="high-res-button" onclick="createBarcodeSheet('A4',true)">Create A4 Barcode - High Res</button>
+            <button class="high-res-button" onclick="createBarcodeSheet('A3',true)">Create A3 Barcode - High Res</button>
+        </div>
+        <div id="serialStatus" class="status"></div>
+        <canvas id="barcodeCanvasSN" style="display:none;"></canvas>
+    </div>
+
+    <div class="container">
+        <h2>2. Tạo list Tổng Hợp</h2>
+        <div class="form-group"><label for="file1" class="file-label" id="file1Label">Chọn list Series</label><input type="file" id="file1" accept=".xlsx,.xls" onchange="handleFileSelect(1)"><span id="file1Info" class="file-info"></span></div>
+        <div class="form-group"><label for="file2" class="file-label" id="file2Label">Chọn list QR</label><input type="file" id="file2" accept=".xlsx,.xls" onchange="handleFileSelect(2)"><span id="file2Info" class="file-info"></span></div>
+        <button onclick="mixExcelFiles()">Tạo List Tổng Hợp</button>
+        <button class="save-button" onclick="mixExcelFiles(true)">Tạo list và lưu..</button>
+        <div id="mixStatus" class="status"></div>
+        <div class="browser-note"><strong>Note:</strong> "Save To..." works best in Chrome, Edge, Opera.</div>
+    </div>
+
+    <div class="container">
+        <h2>3. Tạo nhãn in thùng Carton</h2>
+        <div class="form-group"><label for="productName">Product Name:</label><input type="text" id="productName" placeholder="Enter product name"></div>
+        <div class="form-group"><label for="model">Model:</label><input type="text" id="model" placeholder="Enter model name"></div>
+        <div class="form-group"><label for="sku">SKU:</label><input type="text" id="sku" placeholder="Enter SKU"></div>
+        <div class="form-group">
+            <label for="snListFile" class="file-label" id="snListLabel">Chọn List Series (có thể chọn nhiều file)</label>
+            <input type="file" id="snListFile" accept=".xlsx,.xls" multiple onchange="handleSNListSelect()">
+            <span id="snListInfo" class="file-info"></span>
+            <div class="example">File Excel sẽ nhận hàng đầu tiên của cột là tiêu đề, các hàng còn lại là số Series.</div>
+            <div id="fileListContainer" class="file-list" style="display:none;"><div id="fileListContent"></div></div>
+            <button class="clear-all-btn" id="clearAllBtn" style="display:none;" onclick="clearAllFiles()">Xóa tất cả file</button>
+        </div>
+        <div class="button-group">
+            <button onclick="createPDF()">Tạo 2 Label Giống nhau Size A4</button>
+            <button class="save-button" onclick="createPDF(true)">Tạo 2 Label giống nhau và lưu...</button>
+            <button onclick="createPDF2Different()">Tạo 2 Label khác nhau Size A4</button>
+            <button class="save-button" onclick="createPDF2Different(true)">Tạo 2 Label khác nhau và lưu...</button>
+            <div><button class="label-100x150-button" onclick="createPDF100x150()">Create Carton label 100 x 150mm</button><div class="button-note">50 Barcodes / Label (Auto split if &gt; 50)</div></div>
+            <button class="save-button label-100x150-button" onclick="createPDF100x150(true)">Create 100x150mm và lưu...</button>
+            <div><button class="label-100x150-1file-button" onclick="createPDF100x150_1File()">Create Carton Label 100 x 150mm - 1 File</button><div class="button-note">1 File, 50 SNs/Label, Auto CTN numbering</div></div>
+            <button class="save-button label-100x150-1file-button" onclick="createPDF100x150_1File(true)">Create 100x150mm 1 File và lưu...</button>
+            <!-- NEW: No Barcode -->
+            <div><button class="label-nobc-button" onclick="createPDF100x150_NoBarcode()">Create Carton Label 100x150mm - NO BARCODE</button><div class="button-note">100 SNs / Label &bull; 5 Cols &times; 20 SNs &bull; QR per column (Auto split if &gt; 100)</div></div>
+            <button class="save-button label-nobc-button" onclick="createPDF100x150_NoBarcode(true)">Create 100x150mm NO BARCODE và lưu...</button>
+            <div><button class="label-70x50-button" onclick="createPDF70x50()">Create Carton label 70 x 50mm</button><div class="button-note">12 Serial Numbers / Label (Auto split if &gt; 12)</div></div>
+            <button class="save-button label-70x50-button" onclick="createPDF70x50(true)">Create 70x50mm và lưu...</button>
+            <div><button class="label-70x50-psu-button" onclick="createPDF70x50_PSU()">Create Carton Label 70 x 50mm - PSU</button><div class="button-note">1 File, 10 SNs/Label, 1 Label/CTN</div></div>
+            <button class="save-button label-70x50-psu-button" onclick="createPDF70x50_PSU(true)">Create 70x50mm PSU và lưu...</button>
+            <button class="print-button" onclick="printPDF()" id="printButton" disabled>In PDF</button>
+        </div>
+        <div id="cartonStatus" class="status"></div>
+        <canvas id="barcodeCanvas" style="display:none;"></canvas>
+        <div id="qrCanvas"></div>
+    </div>
+
+    <script>
+        let currentPDF = null;
+        let serialNumberData = [];
+        let generatedSerialNumbers = [];
+        let totalQuantityAllCartons = 0;
+        let loadedFiles = [];
+        const supportsFileSystemAccess = 'showSaveFilePicker' in window;
+
+        function handleFileSelect(fileNum) {
+            const fi = document.getElementById(`file${fileNum}`);
+            const fl = document.getElementById(`file${fileNum}Label`);
+            const fo = document.getElementById(`file${fileNum}Info`);
+            if (fi.files.length > 0) { fl.classList.add('file-selected'); fl.textContent = 'Đã chọn File'; fo.textContent = fi.files[0].name; }
+        }
+
+        function handleSNListSelect() {
+            const fileInput = document.getElementById('snListFile');
+            const fileLabel = document.getElementById('snListLabel');
+            const statusDiv = document.getElementById('cartonStatus');
+            if (fileInput.files.length === 0) return;
+            const newFiles = Array.from(fileInput.files);
+            fileLabel.classList.add('file-selected'); fileLabel.textContent = 'Thêm File';
+            let filesProcessed = 0;
+            newFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const wb = XLSX.read(e.target.result, {type:'binary'});
+                        const ws = wb.Sheets[wb.SheetNames[0]];
+                        const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+                        if (data.length > 0) {
+                            const headers = data[0];
+                            for (let col = 0; col < headers.length; col++) {
+                                if (headers[col]) {
+                                    const cd = { title: headers[col], serialNumbers: [], fileName: file.name };
+                                    for (let row = 1; row < data.length; row++) {
+                                        if (data[row][col] && data[row][col].toString().trim()) cd.serialNumbers.push(data[row][col].toString().trim());
+                                    }
+                                    if (cd.serialNumbers.length > 0) { serialNumberData.push(cd); totalQuantityAllCartons += cd.serialNumbers.length; }
+                                }
+                            }
+                            loadedFiles.push({ name: file.name, columns: headers.filter(h=>h).length });
+                        }
+                        filesProcessed++;
+                        if (filesProcessed === newFiles.length) { updateFileListUI(); showStatus(statusDiv, `Loaded ${loadedFiles.length} file(s), ${serialNumberData.length} column(s), ${totalQuantityAllCartons} total SNs`, 'success'); }
+                    } catch(err) { filesProcessed++; showStatus(statusDiv, 'Error reading ' + file.name + ': ' + err.message, 'error'); }
+                };
+                reader.readAsBinaryString(file);
+            });
+            fileInput.value = '';
+        }
+
+        function updateFileListUI() {
+            const flc = document.getElementById('fileListContainer');
+            const flcontent = document.getElementById('fileListContent');
+            const cab = document.getElementById('clearAllBtn');
+            const fi = document.getElementById('snListInfo');
+            if (loadedFiles.length > 0) {
+                flc.style.display = 'block'; cab.style.display = 'inline-block'; fi.textContent = `${loadedFiles.length} file(s) loaded`;
+                flcontent.innerHTML = loadedFiles.map((f,i) => {
+                    const cnt = serialNumberData.filter(d=>d.fileName===f.name).reduce((s,d)=>s+d.serialNumbers.length,0);
+                    return `<div class="file-list-item"><span class="file-name">${f.name}</span><span class="file-count">${cnt} SN</span><button class="remove-btn" onclick="removeFile(${i})">X</button></div>`;
+                }).join('');
+            } else {
+                flc.style.display='none'; cab.style.display='none'; fi.textContent='';
+                const fl=document.getElementById('snListLabel'); fl.classList.remove('file-selected'); fl.textContent='Chọn List Series (có thể chọn nhiều file)';
+            }
+        }
+
+        function removeFile(index) {
+            const fn = loadedFiles[index].name;
+            serialNumberData = serialNumberData.filter(d=>d.fileName!==fn);
+            totalQuantityAllCartons = serialNumberData.reduce((s,d)=>s+d.serialNumbers.length,0);
+            loadedFiles.splice(index,1); updateFileListUI();
+            showStatus(document.getElementById('cartonStatus'), `Removed ${fn}. ${loadedFiles.length} file(s) remaining, ${totalQuantityAllCartons} SNs`, 'info');
+        }
+
+        function clearAllFiles() {
+            serialNumberData=[]; loadedFiles=[]; totalQuantityAllCartons=0; updateFileListUI();
+            showStatus(document.getElementById('cartonStatus'), 'All files cleared', 'info');
+        }
+
+        function createBarcodeImage(text, canvasId='barcodeCanvas', scale=2) {
+            const canvas = document.getElementById(canvasId);
+            JsBarcode(canvas, text, { format:"CODE128", width:2.5*scale, height:35*scale, displayValue:false, margin:0 });
+            return canvas.toDataURL('image/png');
+        }
+
+        function createQRCodeImage(text, size=120) {
+            const qrDiv = document.getElementById('qrCanvas');
+            qrDiv.innerHTML = '';
+            const tmpDiv = document.createElement('div');
+            tmpDiv.style.display='inline-block'; qrDiv.appendChild(tmpDiv);
+            new QRCode(tmpDiv, { text:text, width:size, height:size, correctLevel:QRCode.CorrectLevel.M });
+            return new Promise(resolve => {
+                setTimeout(() => { const img=tmpDiv.querySelector('img'); resolve(img ? img.src : null); }, 100);
+            });
+        }
+
+        function generateSerialNumbersList() {
+            const sn    = document.getElementById('serialNumber').value.trim();
+            const qty   = parseInt(document.getElementById('quantity').value);
+            const model = document.getElementById('snModel').value.trim();
+            const snPerCTN = parseInt(document.getElementById('cartonNo').value);
+            if (!sn || !qty || qty < 1 || !model || !snPerCTN || snPerCTN < 1) return null;
+            const matches = sn.match(/\d+/g);
+            if (!matches || matches.length === 0) return null;
+            let lastMatch=null, lastPos=-1;
+            for (const m of matches) { const p=sn.lastIndexOf(m); if(p>lastPos){lastMatch=m;lastPos=p;} }
+            if (!lastMatch) return null;
+            const nLen=lastMatch.length, start=parseInt(lastMatch), prefix=sn.substring(0,lastPos), suffix=sn.substring(lastPos+nLen);
+            const numbers=[];
+            for(let i=0;i<qty;i++) numbers.push(prefix+((start+i).toString().padStart(nLen,'0'))+suffix);
+            return { serialNumbers:numbers, model, snPerCTN, quantity:qty, firstSN:sn, lastSN:numbers[numbers.length-1] };
+        }
+
+        async function createBarcodeSheet(pageSize, highRes) {
+            const statusDiv=document.getElementById('serialStatus');
+            const data=generateSerialNumbersList();
+            if(!data){showStatus(statusDiv,'Please fill in all fields correctly','error');return;}
+            generatedSerialNumbers=data.serialNumbers;
+            try {
+                const {jsPDF}=window.jspdf;
+                const isA3=pageSize==='A3';
+                const batchLimit=isA3?(highRes?2000:4816):(highRes?1500:3000);
+                const totalQty=data.quantity;
+                const numBatches=Math.ceil(totalQty/batchLimit);
+                if(numBatches>1) showStatus(statusDiv,`Quantity ${totalQty} exceeds limit. Creating ${numBatches} files...`,'info');
+                for(let b=0;b<numBatches;b++){
+                    const bs=b*batchLimit, be=Math.min(bs+batchLimit,totalQty);
+                    const bd={serialNumbers:data.serialNumbers.slice(bs,be),model:data.model,cartonNo:data.cartonNo,quantity:be-bs,firstSN:data.serialNumbers[bs],lastSN:data.serialNumbers[be-1],totalQuantity:totalQty,batchNum:b+1,totalBatches:numBatches};
+                    const pdf=new jsPDF('p','mm',pageSize.toLowerCase());
+                    const pw=isA3?297:210,ph=isA3?420:297,mg=6;
+                    const cols=isA3?8:6,rows=isA3?42:28,scale=highRes?4:2;
+                    const tpp=cols*rows,totPgs=Math.ceil(bd.quantity/tpp);
+                    const ct=mg+18,ch=ph-ct-mg,uw=pw-2*mg,cw=uw/cols,cellH=ch/rows;
+                    const bw=cw-2,bh=cellH*0.35,tRowH=bh+2.5+1.94+1.5;
+                    const cDate=new Date().toLocaleDateString('en-US');
+                    for(let pg=0;pg<totPgs;pg++){
+                        if(pg>0) pdf.addPage();
+                        const si=pg*tpp,ei=Math.min(si+tpp,bd.quantity),pq=ei-si;
+                        pdf.setFontSize(10);
+                        const qw=(pw-2*mg)/4;
+                        let mt=`Model: ${bd.model}`; if(bd.totalBatches>1) mt+=` (Batch ${bd.batchNum}/${bd.totalBatches})`;
+                        pdf.text(mt,mg,mg+8);
+                        pdf.text(`Page: ${pg+1} / ${totPgs}`,mg+qw,mg+8);
+                        let qt=`Quantity: ${pq} / ${bd.quantity}`; if(bd.totalBatches>1) qt=`Qty: ${pq} / ${bd.quantity} (Total: ${bd.totalQuantity})`;
+                        pdf.text(qt,mg+qw*2,mg+8);
+                        pdf.text(`Creating Date: ${cDate}`,mg+qw*3,mg+8);
+                        pdf.text(`Serial Number Range: ${bd.serialNumbers[si]} - ${bd.serialNumbers[ei-1]}`,mg,mg+12);
+                        for(let i=si;i<ei;i++){
+                            const li=i-si,row=Math.floor(li/cols),col=li%cols;
+                            const x=mg+col*cw+1,y=ct+2+row*tRowH;
+                            pdf.addImage(createBarcodeImage(bd.serialNumbers[i],'barcodeCanvasSN',scale),'PNG',x,y,bw,bh);
+                            pdf.setFontSize(5.5); pdf.text(bd.serialNumbers[i],x,y+bh+2.5);
+                        }
+                        pdf.setDrawColor(0,0,0); pdf.setLineWidth(0.1);
+                        const ar=Math.ceil((ei-si)/cols),ac=Math.min(cols,pq),rb=mg+ac*cw;
+                        pdf.line(mg,ct,rb,ct);
+                        for(let r=0;r<ar-1;r++) pdf.line(mg,ct+2+(r+1)*tRowH-1.5/0.7,rb,ct+2+(r+1)*tRowH-1.5/0.7);
+                        pdf.line(mg,ct+2+ar*tRowH,rb,ct+2+ar*tRowH);
+                        for(let c=0;c<=ac;c++) pdf.line(mg+c*cw,ct,mg+c*cw,ct+2+ar*tRowH);
+                    }
+                    const dt=new Date().toISOString().split('T')[0];
+                    let fn=`${bd.model}_${bd.firstSN}_${bd.lastSN}_QTY${bd.quantity}_${dt}`;
+                    if(bd.totalBatches>1) fn+=`_Batch${bd.batchNum}`;
+                    pdf.save(fn+'.pdf');
+                    showStatus(statusDiv,numBatches>1?`Batch ${bd.batchNum}/${bd.totalBatches} created`:`${pageSize} barcode sheet created!`,'success');
+                    if(b<numBatches-1) await new Promise(r=>setTimeout(r,100));
+                }
+                if(numBatches>1) showStatus(statusDiv,`Created ${numBatches} PDF files for ${totalQty} barcodes!`,'success');
+            } catch(e){showStatus(statusDiv,'Error: '+e.message,'error');}
+        }
+
+        async function createPDF(useSavePicker=false) {
+            const pn=document.getElementById('productName').value.trim(),md=document.getElementById('model').value.trim(),sk=document.getElementById('sku').value.trim();
+            const sd=document.getElementById('cartonStatus');
+            if(!pn||!md||!sk){showStatus(sd,'Please enter Product Name, Model and SKU','error');return;}
+            if(serialNumberData.length===0){showStatus(sd,'Please upload a serial number list','error');return;}
+            try {
+                const {jsPDF}=window.jspdf;
+                const pdf=new jsPDF('p','mm','a4'),pw=210,ph=297,mg=10;
+                const now=new Date(),pdfn=now.toISOString().split('T')[0];
+                let pc=0;
+                for(let i=0;i<serialNumberData.length;i++){
+                    const cd=serialNumberData[i];
+                    const pd={productName:pn,model:md,sku:sk,quantity:cd.serialNumbers.length,totalQuantity:totalQuantityAllCartons,cartonNo:cd.title,packingDate:now.toLocaleDateString('en-GB'),packingTime:now.toTimeString().slice(0,5),serialNumbers:cd.serialNumbers,currentPage:i+1,totalPages:serialNumberData.length};
+                    if(pc>0) pdf.addPage();
+                    await createLabelContent(pdf,pd,pw,ph,mg,0);
+                    pdf.setDrawColor(128,128,128);pdf.setLineWidth(0.5);pdf.setLineDashPattern([5,5],0);
+                    const lh=(ph-4-5)/2; pdf.line(0,2+lh+2.5,pw,2+lh+2.5);
+                    pdf.setLineDashPattern([],0);
+                    await createLabelContent(pdf,pd,pw,ph,mg,1);
+                    pc++;
+                }
+                currentPDF=pdf; document.getElementById('printButton').disabled=false;
+                const fn=`${md}_QTY${totalQuantityAllCartons}_${pdfn}.pdf`;
+                await savePDF(pdf,fn,useSavePicker,sd,'PDF created successfully!');
+            } catch(e){showStatus(document.getElementById('cartonStatus'),'Error: '+e.message,'error');}
+        }
+
+        async function createLabelContent(pdf,pageData,pw,ph,mg,pos) {
+            const pml=1,pmr=1,pmt=2,pmb=2,gap=5;
+            const lh=(ph-pmt-pmb-gap)/2,yo=pmt+pos*(lh+gap),ew=pw-pml-pmr;
+            const s1h=20;
+            pdf.setDrawColor(0); pdf.rect(pml,yo,ew,s1h);
+            pdf.setFontSize(11);
+            pdf.setFont(undefined,'bold'); pdf.text('Product Name:',pml+3,yo+5);
+            pdf.setFont(undefined,'normal'); pdf.text(pageData.productName,pml+3+pdf.getTextWidth('Product Name:')+2,yo+5);
+            pdf.setFont(undefined,'bold'); pdf.text('Model:',pml+3,yo+10);
+            pdf.setFont(undefined,'normal'); pdf.text(pageData.model,pml+3+pdf.getTextWidth('Model:')+2,yo+10);
+            pdf.setFont(undefined,'bold');
+            const sl='SKU:',sx=(pw-pdf.getTextWidth(sl)-pdf.getTextWidth(pageData.sku)-2)/2;
+            pdf.text(sl,sx,yo+10); pdf.setFont(undefined,'normal'); pdf.text(pageData.sku,sx+pdf.getTextWidth(sl)+2,yo+10);
+            pdf.setFont(undefined,'bold');
+            const pl='Page No:',pv=`${pageData.currentPage} / ${pageData.totalPages}`,px=pw-pmr-pdf.getTextWidth(pl)-pdf.getTextWidth(pv)-5;
+            pdf.text(pl,px,yo+10); pdf.setFont(undefined,'normal'); pdf.text(pv,px+pdf.getTextWidth(pl)+2,yo+10);
+            pdf.setFont(undefined,'bold'); pdf.text('QTY:',pml+3,yo+15);
+            pdf.setFont(undefined,'normal'); pdf.text(`${Math.min(pageData.serialNumbers.length,60)} / ${pageData.totalQuantity}`,pml+3+pdf.getTextWidth('QTY:')+2,yo+15);
+            pdf.setFont(undefined,'bold');
+            const cl='Carton No:',cv=pageData.cartonNo,cx=(pw-pdf.getTextWidth(cl)-pdf.getTextWidth(cv)-2)/2;
+            pdf.text(cl,cx,yo+15); pdf.setFont(undefined,'normal'); pdf.text(cv,cx+pdf.getTextWidth(cl)+2,yo+15);
+            pdf.setFont(undefined,'bold');
+            const dkl='Packing Date:',dkv=`${pageData.packingDate} ${pageData.packingTime}`,dkx=pw-pmr-pdf.getTextWidth(dkl)-pdf.getTextWidth(dkv)-5;
+            pdf.text(dkl,dkx,yo+15); pdf.setFont(undefined,'normal'); pdf.text(dkv,dkx+pdf.getTextWidth(dkl)+2,yo+15);
+            const s2t=yo+s1h+0.2,s2h=lh-s1h-0.2,cols=6,rows=10,cw=ew/cols,qh=18,rh=(s2h-6-qh)/(rows-1)*0.95,bw=cw-2,bh=rh*0.65,its=Math.min(pageData.serialNumbers.length,60);
+            for(let c=0;c<cols;c++){
+                const x=pml+c*cw,y=s2t+3,qd=[];
+                for(let r=0;r<rows;r++){const idx=r*cols+c; if(idx<its) qd.push(pageData.serialNumbers[idx]);}
+                if(qd.length>0){const qi=await createQRCodeImage(qd.join('\n'));if(qi){const qs=Math.min(cw-2,qh-2);pdf.addImage(qi,'PNG',x+(cw-qs)/2,y,qs,qs);}}
+            }
+            for(let i=0;i<its;i++){
+                const r=Math.floor(i/cols),c=i%cols,x=pml+c*cw+1,y=s2t+3+qh+r*rh;
+                pdf.addImage(createBarcodeImage(pageData.serialNumbers[i],'barcodeCanvas',4),'PNG',x,y,bw,bh);
+                pdf.setFontSize(6.5); pdf.text(pageData.serialNumbers[i],x,y+bh+2.0);
+            }
+            pdf.rect(pml,s2t,ew,Math.max(s2h,qh+(Math.ceil(its/cols)*rh)+6));
+        }
+
+        async function createPDF2Different(useSavePicker=false) {
+            const pn=document.getElementById('productName').value.trim(),md=document.getElementById('model').value.trim(),sk=document.getElementById('sku').value.trim();
+            const sd=document.getElementById('cartonStatus');
+            if(!pn||!md||!sk){showStatus(sd,'Please enter Product Name, Model and SKU','error');return;}
+            if(serialNumberData.length===0){showStatus(sd,'Please upload a serial number list','error');return;}
+            try {
+                const {jsPDF}=window.jspdf;
+                const pdf=new jsPDF('p','mm','a4'),pw=210,ph=297,mg=10;
+                const now=new Date(),pdfn=now.toISOString().split('T')[0];
+                let pc=0;
+                for(let i=0;i<serialNumberData.length;i+=2){
+                    if(pc>0) pdf.addPage();
+                    const cd1=serialNumberData[i];
+                    const mk=(c)=>({productName:pn,model:md,sku:sk,quantity:c.serialNumbers.length,totalQuantity:totalQuantityAllCartons,cartonNo:c.title,packingDate:now.toLocaleDateString('en-GB'),packingTime:now.toTimeString().slice(0,5),serialNumbers:c.serialNumbers,currentPage:i+1,totalPages:serialNumberData.length});
+                    await createLabelContent(pdf,mk(cd1),pw,ph,mg,0);
+                    pdf.setDrawColor(128,128,128);pdf.setLineWidth(0.5);pdf.setLineDashPattern([5,5],0);
+                    pdf.line(0,2+(ph-4-5)/2+2.5,pw,2+(ph-4-5)/2+2.5);
+                    pdf.setLineDashPattern([],0);
+                    if(i+1<serialNumberData.length) await createLabelContent(pdf,{...mk(serialNumberData[i+1]),currentPage:i+2},pw,ph,mg,1);
+                    pc++;
+                }
+                currentPDF=pdf; document.getElementById('printButton').disabled=false;
+                await savePDF(pdf,`${md}_QTY${totalQuantityAllCartons}_${pdfn}_2Different.pdf`,useSavePicker,sd,'PDF 2 different labels created!');
+            } catch(e){showStatus(document.getElementById('cartonStatus'),'Error: '+e.message,'error');}
+        }
+
+        async function createPDF100x150(useSavePicker=false) {
+            const pn=document.getElementById('productName').value.trim(),md=document.getElementById('model').value.trim(),sk=document.getElementById('sku').value.trim();
+            const sd=document.getElementById('cartonStatus');
+            if(!pn||!md||!sk){showStatus(sd,'Please enter Product Name, Model and SKU','error');return;}
+            if(serialNumberData.length===0){showStatus(sd,'Please upload a serial number list','error');return;}
+            try {
+                const {jsPDF}=window.jspdf;
+                const pdf=new jsPDF('l','mm',[100,150]),pw=150,ph=100,mg=10;
+                const now=new Date(),pdfn=now.toISOString().split('T')[0];
+                const MAX=50; let allLabels=[];
+                for(let i=0;i<serialNumberData.length;i++){
+                    const cd=serialNumberData[i],sns=cd.serialNumbers,tot=sns.length;
+                    const fn=((cd.fileName||cd.title).replace(/\.[^/.]+$/,''));
+                    const nl=Math.ceil(sns.length/MAX);
+                    for(let l=0;l<nl;l++){
+                        const s=l*MAX,e=Math.min(s+MAX,sns.length);
+                        allLabels.push({title:nl>1?`${fn} ${l+1}/${nl}`:fn,serialNumbers:sns.slice(s,e),fileTotalSerials:tot});
+                    }
+                }
+                for(let i=0;i<allLabels.length;i++){
+                    const ld=allLabels[i];
+                    const pd={productName:pn,model:md,sku:sk,quantity:ld.serialNumbers.length,totalQuantity:totalQuantityAllCartons,fileTotalSerials:ld.fileTotalSerials,cartonNo:ld.title,packingDate:now.toLocaleDateString('en-GB'),packingTime:now.toTimeString().slice(0,5),serialNumbers:ld.serialNumbers,currentPage:i+1,totalPages:allLabels.length};
+                    if(i>0) pdf.addPage();
+                    await createLabelContent100x150(pdf,pd,pw,ph,mg);
+                }
+                currentPDF=pdf; document.getElementById('printButton').disabled=false;
+                await savePDF(pdf,`${md}_QTY${totalQuantityAllCartons}_${pdfn}_100x150mm.pdf`,useSavePicker,sd,`PDF ${allLabels.length} label(s) 100x150mm created!`);
+            } catch(e){showStatus(document.getElementById('cartonStatus'),'Error: '+e.message,'error');}
+        }
+
+        async function createLabelContent100x150(pdf,pageData,pw,ph,mg) {
+            const pml=1,pmr=1,pmt=2;
+            const lw=pw-pml-pmr,lh=ph-pmt-2;
+            const sf=Math.min(lw/208,lh/145.5)*1.1;
+            const s1h=20*sf,fs1=11*sf,fs2=6.5*sf;
+            pdf.setDrawColor(0); pdf.rect(pml,pmt,lw,s1h);
+            pdf.setFontSize(fs1);
+            pdf.setFont(undefined,'bold'); pdf.text('Product Name:',pml+3,pmt+5*sf);
+            pdf.setFont(undefined,'normal'); pdf.text(pageData.productName,pml+3+pdf.getTextWidth('Product Name:')+2,pmt+5*sf);
+            pdf.setFont(undefined,'bold'); pdf.text('Model:',pml+3,pmt+10*sf);
+            pdf.setFont(undefined,'normal'); pdf.text(pageData.model,pml+3+pdf.getTextWidth('Model:')+2,pmt+10*sf);
+            pdf.setFont(undefined,'bold');
+            const sl='SKU:',sx=(pw-pdf.getTextWidth(sl)-pdf.getTextWidth(pageData.sku)-2)/2;
+            pdf.text(sl,sx,pmt+10*sf); pdf.setFont(undefined,'normal'); pdf.text(pageData.sku,sx+pdf.getTextWidth(sl)+2,pmt+10*sf);
+            pdf.setFont(undefined,'bold');
+            const pl='Page No:',pv=`${pageData.currentPage} / ${pageData.totalPages}`,px=pw-pmr-pdf.getTextWidth(pl)-pdf.getTextWidth(pv)-3;
+            pdf.text(pl,px,pmt+10*sf); pdf.setFont(undefined,'normal'); pdf.text(pv,px+pdf.getTextWidth(pl)+2,pmt+10*sf);
+            const aqty=Math.min(pageData.serialNumbers.length,50),qd=pageData.ctnTotalSerials||pageData.fileTotalSerials;
+            pdf.setFont(undefined,'bold'); pdf.text('QTY:',pml+3,pmt+15*sf);
+            pdf.setFont(undefined,'normal'); pdf.text(`${aqty} / ${qd}`,pml+3+pdf.getTextWidth('QTY:')+2,pmt+15*sf);
+            pdf.setFont(undefined,'bold');
+            const cl='CTN No:',cv=pageData.cartonNo,cx=(pw-pdf.getTextWidth(cl)-pdf.getTextWidth(cv)-2)/2;
+            pdf.text(cl,cx,pmt+15*sf); pdf.setFont(undefined,'normal'); pdf.text(cv,cx+pdf.getTextWidth(cl)+2,pmt+15*sf);
+            pdf.setFont(undefined,'bold');
+            const dkl='Packing Date:',dkv=`${pageData.packingDate} ${pageData.packingTime}`,dkx=pw-pmr-pdf.getTextWidth(dkl)-pdf.getTextWidth(dkv)-3;
+            pdf.text(dkl,dkx,pmt+15*sf); pdf.setFont(undefined,'normal'); pdf.text(dkv,dkx+pdf.getTextWidth(dkl)+2,pmt+15*sf);
+            const s2t=pmt+s1h+0.2*sf,s2h=lh-s1h-0.2*sf,cols=5,rows=10,cw=lw/cols,qh=18*sf,rh=(s2h-6-qh)/(rows-1)*0.95,bw=cw-2,bh=rh*0.65,its=Math.min(pageData.serialNumbers.length,50);
+            for(let c=0;c<cols;c++){
+                const x=pml+c*cw,y=s2t+3,qd2=[];
+                for(let r=0;r<rows;r++){const idx=r*cols+c; if(idx<its) qd2.push(pageData.serialNumbers[idx]);}
+                if(qd2.length>0){const qi=await createQRCodeImage(qd2.join('\n'));if(qi){const qs=Math.min(cw-2,qh-2);pdf.addImage(qi,'PNG',x+(cw-qs)/2,y,qs,qs);}}
+            }
+            for(let i=0;i<its;i++){
+                const r=Math.floor(i/cols),c=i%cols,x=pml+c*cw+1,y=s2t+3+qh+r*rh;
+                pdf.addImage(createBarcodeImage(pageData.serialNumbers[i],'barcodeCanvas',Math.max(3,Math.round(4*sf))),'PNG',x,y,bw,bh);
+                pdf.setFontSize(fs2); pdf.text(pageData.serialNumbers[i],x,y+bh+2.0*sf);
+            }
+            pdf.rect(pml,s2t,lw,Math.max(s2h,qh+(Math.ceil(its/cols)*rh)+6));
+        }
+
+        async function createPDF100x150_1File(useSavePicker=false) {
+            const pn=document.getElementById('productName').value.trim(),md=document.getElementById('model').value.trim(),sk=document.getElementById('sku').value.trim();
+            const sd=document.getElementById('cartonStatus');
+            if(!pn||!md||!sk){showStatus(sd,'Please enter Product Name, Model and SKU','error');return;}
+            if(serialNumberData.length===0){showStatus(sd,'Please upload a serial number list','error');return;}
+            if(loadedFiles.length>1){showStatus(sd,'Error: This function only accepts 1 file.','error');return;}
+            try {
+                const {jsPDF}=window.jspdf;
+                const pdf=new jsPDF('l','mm',[100,150]),pw=150,ph=100,mg=10;
+                const now=new Date(),pdfn=now.toISOString().split('T')[0];
+                const MAX=50,SPC=100;
+                let allSNs=[];
+                for(const cd of serialNumberData) allSNs=allSNs.concat(cd.serialNumbers);
+                const tot=allSNs.length,nl=Math.ceil(tot/MAX),nCTN=Math.ceil(tot/SPC);
+                const ctnMap={};
+                for(let ci=0;ci<nCTN;ci++){const cs=ci*SPC,ce=Math.min(cs+SPC,tot);ctnMap[ci+1]=ce-cs;}
+                const allLabels=[];
+                for(let li=0;li<nl;li++){
+                    const s=li*MAX,e=Math.min(s+MAX,tot),sns=allSNs.slice(s,e),cn=Math.floor(li/2)+1;
+                    allLabels.push({title:`CTN ${cn} ${sns[0]} - ${sns[sns.length-1]}`,serialNumbers:sns,fileTotalSerials:ctnMap[cn],ctnTotalSerials:ctnMap[cn]});
+                }
+                for(let i=0;i<allLabels.length;i++){
+                    const ld=allLabels[i];
+                    const pd={productName:pn,model:md,sku:sk,quantity:ld.serialNumbers.length,totalQuantity:tot,fileTotalSerials:ld.fileTotalSerials,ctnTotalSerials:ld.ctnTotalSerials,cartonNo:ld.title,packingDate:now.toLocaleDateString('en-GB'),packingTime:now.toTimeString().slice(0,5),serialNumbers:ld.serialNumbers,currentPage:i+1,totalPages:allLabels.length};
+                    if(i>0) pdf.addPage();
+                    await createLabelContent100x150(pdf,pd,pw,ph,mg);
+                }
+                currentPDF=pdf; document.getElementById('printButton').disabled=false;
+                await savePDF(pdf,`${md}_QTY${tot}_${pdfn}_100x150mm_1File.pdf`,useSavePicker,sd,`PDF ${allLabels.length} label(s) 100x150mm 1-File created! ${tot} SNs, ${nCTN} CTN(s)`);
+            } catch(e){showStatus(document.getElementById('cartonStatus'),'Error: '+e.message,'error');}
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  NEW: Create Carton Label 100x150mm - NO BARCODE
+        //  100 SNs per page · 5 columns × 20 SNs · QR per column (top)
+        // ═══════════════════════════════════════════════════════════════
+        async function createPDF100x150_NoBarcode(useSavePicker=false) {
+            const pn=document.getElementById('productName').value.trim(),md=document.getElementById('model').value.trim(),sk=document.getElementById('sku').value.trim();
+            const sd=document.getElementById('cartonStatus');
+            if(!pn||!md||!sk){showStatus(sd,'Please enter Product Name, Model and SKU','error');return;}
+            if(serialNumberData.length===0){showStatus(sd,'Please upload a serial number list','error');return;}
+            try {
+                const {jsPDF}=window.jspdf;
+                const pdf=new jsPDF('l','mm',[100,150]),pw=150,ph=100;
+                const now=new Date(),pdfn=now.toISOString().split('T')[0];
+                const MAX=100; // 100 SNs per label = 1 CTN
+                let allLabels=[];
+                let ctnCounter=0; // Global CTN counter across all files
+
+                // Process files in order, CTN numbering continues across files
+                for(let fi=0;fi<serialNumberData.length;fi++){
+                    const cd=serialNumberData[fi];
+                    const sns=cd.serialNumbers;
+                    const nl=Math.ceil(sns.length/MAX);
+                    for(let l=0;l<nl;l++){
+                        ctnCounter++;
+                        const s=l*MAX, e=Math.min(s+MAX,sns.length);
+                        const labelSNs=sns.slice(s,e);
+                        const ctnStr='CTN '+String(ctnCounter).padStart(2,'0');
+                        const ctnNo=`${ctnStr} ${labelSNs[0]}`; // CTN 01 + first SN
+                        allLabels.push({
+                            ctnNo:   ctnNo,
+                            ctnQty:  labelSNs.length,  // actual count in this CTN
+                            serialNumbers: labelSNs
+                        });
+                    }
+                }
+
+                const totalPages=allLabels.length;
+                showStatus(sd,`Generating ${totalPages} NO-BARCODE label(s)...`,'info');
+                for(let i=0;i<allLabels.length;i++){
+                    const ld=allLabels[i];
+                    const pd={
+                        productName: pn,
+                        model:       md,
+                        sku:         sk,
+                        ctnQty:      ld.ctnQty,
+                        cartonNo:    ld.ctnNo,
+                        packingDate: now.toLocaleDateString('en-GB'),
+                        packingTime: now.toTimeString().slice(0,5),
+                        serialNumbers: ld.serialNumbers,
+                        currentPage: i+1,
+                        totalPages:  totalPages
+                    };
+                    if(i>0) pdf.addPage();
+                    await createLabelContent100x150_NoBarcode(pdf,pd,pw,ph);
+                }
+                currentPDF=pdf; document.getElementById('printButton').disabled=false;
+                await savePDF(pdf,`${md}_QTY${totalQuantityAllCartons}_${pdfn}_100x150mm_NOBC.pdf`,useSavePicker,sd,`PDF ${totalPages} label(s) 100x150mm NO BARCODE created! Total: ${totalQuantityAllCartons} SNs, ${ctnCounter} CTN(s)`);
+            } catch(e){showStatus(document.getElementById('cartonStatus'),'Error: '+e.message,'error');}
+        }
+
+        async function createLabelContent100x150_NoBarcode(pdf, pageData, pageWidth, pageHeight) {
+            // ── Margins & usable area ──────────────────────────────────
+            const PML=1, PMR=1, PMT=2, PMB=2;
+            const LW = pageWidth  - PML - PMR;   // 148 mm
+            const LH = pageHeight - PMT  - PMB;  // 96  mm
+
+            // Scale factor (same approach as other 100x150 helpers)
+            const SF = Math.min(LW/208, LH/145.5) * 1.1;  // ≈ 0.726
+
+            // ── Header box ─────────────────────────────────────────────
+            const HDR_H  = 20 * SF;               // ≈ 14.5 mm
+            const HDR_FS = 11 * SF;               // ≈ 8 pt
+
+            pdf.setDrawColor(0);
+            pdf.setLineWidth(0.3);
+            pdf.rect(PML, PMT, LW, HDR_H);
+
+            pdf.setFontSize(HDR_FS);
+            const row1y = PMT + 5*SF;
+            const row2y = PMT + 10*SF;
+            const row3y = PMT + 15*SF;
+
+            // Row 1: Product Name (left) | SKU (centre)
+            pdf.setFont(undefined,'bold');   pdf.text('Product Name:', PML+2, row1y);
+            pdf.setFont(undefined,'normal'); pdf.text(pageData.productName, PML+2+pdf.getTextWidth('Product Name:')+1, row1y);
+            pdf.setFont(undefined,'bold');
+            const skuL='SKU:', skuX=(pageWidth - pdf.getTextWidth(skuL) - pdf.getTextWidth(pageData.sku) - 1)/2;
+            pdf.text(skuL, skuX, row1y);
+            pdf.setFont(undefined,'normal'); pdf.text(pageData.sku, skuX+pdf.getTextWidth(skuL)+1, row1y);
+
+            // Row 2: Model từ input field (left) | CTN No (centre) | Page No (right)
+            pdf.setFont(undefined,'bold');   pdf.text('Model:', PML+2, row2y);
+            pdf.setFont(undefined,'normal'); pdf.text(pageData.model, PML+2+pdf.getTextWidth('Model:')+1, row2y);
+            pdf.setFont(undefined,'bold');
+            const ctnL='CTN No:', ctnX=(pageWidth - pdf.getTextWidth(ctnL) - pdf.getTextWidth(pageData.cartonNo) - 1)/2;
+            pdf.text(ctnL, ctnX, row2y);
+            pdf.setFont(undefined,'normal'); pdf.text(pageData.cartonNo, ctnX+pdf.getTextWidth(ctnL)+1, row2y);
+            pdf.setFont(undefined,'bold');
+            const pgL='Page No:', pgV=`${pageData.currentPage} / ${pageData.totalPages}`;
+            const pgX = pageWidth - PMR - pdf.getTextWidth(pgL) - pdf.getTextWidth(pgV) - 3;
+            pdf.text(pgL, pgX, row2y);
+            pdf.setFont(undefined,'normal'); pdf.text(pgV, pgX+pdf.getTextWidth(pgL)+1, row2y);
+
+            // Row 3: QTY = chỉ số lượng SN của CTN này (left) | Packing Date (right)
+            const aqty = pageData.ctnQty || Math.min(pageData.serialNumbers.length, 100);
+            pdf.setFont(undefined,'bold');   pdf.text('QTY:', PML+2, row3y);
+            pdf.setFont(undefined,'normal'); pdf.text(String(aqty), PML+2+pdf.getTextWidth('QTY:')+1, row3y);
+            pdf.setFont(undefined,'bold');
+            const pkL='Packing Date:', pkV=`${pageData.packingDate} ${pageData.packingTime}`;
+            const pkX = pageWidth - PMR - pdf.getTextWidth(pkL) - pdf.getTextWidth(pkV) - 3;
+            pdf.text(pkL, pkX, row3y);
+            pdf.setFont(undefined,'normal'); pdf.text(pkV, pkX+pdf.getTextWidth(pkL)+1, row3y);
+
+            // ── Body area ──────────────────────────────────────────────
+            const BODY_TOP = PMT + HDR_H + 0.5;
+            const BODY_H   = LH  - HDR_H - 0.5;   // ≈ 81 mm
+
+            const COLS = 5;
+            const COL_W = LW / COLS;               // ≈ 29.6 mm
+
+            // QR code: maximise within column width (leave 1.5 mm each side)
+            const QR_SIZE    = Math.min(COL_W - 3, 26);  // mm — printed size (≤ 26 mm)
+            const QR_TOP_PAD = 1.5;
+            const QR_BOT_PAD = 1.0;
+
+            // ── Even distribution of SNs across 5 columns ────────────
+            // base = floor(N/5), first (N%5) columns get one extra row
+            const ITEMS   = Math.min(pageData.serialNumbers.length, 100);
+            const BASE    = Math.floor(ITEMS / COLS);          // min rows per col
+            const EXTRA   = ITEMS % COLS;                      // first EXTRA cols get +1
+
+            // Build per-column SN arrays with even distribution
+            const colArrays = [];
+            let ptr = 0;
+            for(let c = 0; c < COLS; c++){
+                const colCount = BASE + (c < EXTRA ? 1 : 0);
+                colArrays.push(pageData.serialNumbers.slice(ptr, ptr + colCount));
+                ptr += colCount;
+            }
+
+            // ROWS = maximum column length (used for row-height calculation)
+            const ROWS  = Math.max(...colArrays.map(a => a.length), 1);
+            const SN_TOP = BODY_TOP + QR_TOP_PAD + QR_SIZE + QR_BOT_PAD;
+            const SN_H   = BODY_TOP + BODY_H - SN_TOP - 1.2;
+            const ROW_H  = SN_H / ROWS;
+
+            // Font size: largest that comfortably fits in ROW_H
+            const SN_FS = Math.min(7.5, (ROW_H * 0.72) / (0.353 * 0.65));
+
+            // Outer body border
+            pdf.setDrawColor(0);
+            pdf.setLineWidth(0.3);
+            pdf.rect(PML, BODY_TOP, LW, BODY_H);
+
+            // Column dividers
+            pdf.setLineWidth(0.15);
+            for(let c=1;c<COLS;c++){
+                const dx=PML+c*COL_W;
+                pdf.line(dx, BODY_TOP, dx, BODY_TOP+BODY_H);
+            }
+
+            // Dashed separator between QR zone and SN zone
+            const SEP_Y = BODY_TOP + QR_TOP_PAD + QR_SIZE + QR_BOT_PAD*0.5;
+            pdf.setLineDashPattern([1,1],0);
+            pdf.line(PML, SEP_Y, PML+LW, SEP_Y);
+            pdf.setLineDashPattern([],0);
+
+            // Per-column: QR + evenly distributed serial numbers
+            for(let col=0;col<COLS;col++){
+                const colSNs  = colArrays[col];
+                if(colSNs.length===0) continue;
+                const colLeft = PML + col*COL_W;
+
+                // QR code — 500 px render for reliable scanning
+                const qrText = colSNs.join('\n');
+                const qrImg  = await createQRCodeImage(qrText, 500);
+                if(qrImg){
+                    const qrX = colLeft + (COL_W - QR_SIZE)/2;
+                    const qrY = BODY_TOP + QR_TOP_PAD;
+                    pdf.addImage(qrImg, 'PNG', qrX, qrY, QR_SIZE, QR_SIZE);
+                }
+
+                // Serial numbers — bold, centred in column
+                pdf.setFont(undefined,'bold');
+                pdf.setFontSize(SN_FS);
+
+                for(let row=0;row<colSNs.length;row++){
+                    const sn   = colSNs[row];
+                    const snW  = pdf.getTextWidth(sn);
+                    const rawX = colLeft + (COL_W - snW)/2;
+                    const textX = Math.max(colLeft+0.3, Math.min(rawX, colLeft+COL_W-snW-0.3));
+                    const textY = SN_TOP + row*ROW_H + ROW_H*0.75;
+                    pdf.text(sn, textX, textY);
+                }
+            }
+        }
+
+        async function createPDF70x50(useSavePicker=false) {
+            const pn=document.getElementById('productName').value.trim(),md=document.getElementById('model').value.trim();
+            const sd=document.getElementById('cartonStatus');
+            if(!pn||!md){showStatus(sd,'Please enter Product Name and Model','error');return;}
+            if(serialNumberData.length===0){showStatus(sd,'Please upload a serial number list','error');return;}
+            try {
+                const {jsPDF}=window.jspdf;
+                const pdf=new jsPDF('l','mm',[50,70]),pw=70,ph=50;
+                const now=new Date(),pdfn=now.toISOString().split('T')[0];
+                const MAX=12; let allLabels=[];
+                for(const cd of serialNumberData){
+                    const nl=Math.ceil(cd.serialNumbers.length/MAX);
+                    for(let l=0;l<nl;l++){
+                        const s=l*MAX,e=Math.min(s+MAX,cd.serialNumbers.length);
+                        allLabels.push({title:cd.title+(nl>1?` (${l+1}/${nl})`:''),serialNumbers:cd.serialNumbers.slice(s,e),fileName:cd.fileName||''});
+                    }
+                }
+                for(let i=0;i<allLabels.length;i++){
+                    if(i>0) pdf.addPage();
+                    await createLabelContent70x50(pdf,{productName:pn,model:md,serialNumbers:allLabels[i].serialNumbers,cartonNo:allLabels[i].title,currentPage:i+1,totalPages:allLabels.length,fileName:allLabels[i].fileName},pw,ph);
+                }
+                currentPDF=pdf; document.getElementById('printButton').disabled=false;
+                await savePDF(pdf,`${md}_QTY${totalQuantityAllCartons}_${pdfn}_70x50mm.pdf`,useSavePicker,sd,`PDF ${allLabels.length} label(s) 70x50mm created!`);
+            } catch(e){showStatus(document.getElementById('cartonStatus'),'Error: '+e.message,'error');}
+        }
+
+        async function createLabelContent70x50(pdf,pageData,pw,ph) {
+            const a1h=11,cw=66,ch=39,ml=(pw-cw)/2,ct=a1h,cols=2,rows=6,cellW=cw/cols;
+            const qrSz=16,qrCols=2,hdrH=4,btm=2,btp=2;
+            const bt=ct,hy=bt+btp,qBot=ct+ch-btm,qTop=qBot-qrSz,sTop=hy+hdrH+1,sBot=qTop-1,sH=sBot-sTop,cellH=(sH/rows)-0.1;
+            pdf.setDrawColor(0);pdf.setLineWidth(0.3);pdf.rect(ml,bt,cw,ch);
+            pdf.setFontSize(5);pdf.setFont(undefined,'bold');
+            pdf.text(pageData.productName,ml+1,hy+3);
+            if(pageData.fileName){
+                const fne=pageData.fileName.replace(/\.[^/.]+$/,''),m=fne.match(/^(CTN\d+-\d+pcs)/i);
+                if(m){const tw=pdf.getTextWidth(m[1]);pdf.text(m[1],ml+(cw/2)-(tw/2),hy+3);}
+            }
+            const mtxt=`Model: ${pageData.model}`,mtw=pdf.getTextWidth(mtxt);
+            pdf.text(mtxt,ml+cw-mtw-1,hy+3);
+            pdf.setFont(undefined,'bold');pdf.setFontSize(4.5);
+            const its=Math.min(pageData.serialNumbers.length,12);
+            for(let i=0;i<its;i++){
+                const r=Math.floor(i/cols),c=i%cols,x=ml+c*cellW+(cellW/2),y=sTop+r*cellH+(cellH/2);
+                const t=pageData.serialNumbers[i],tw=pdf.getTextWidth(t),tx=x-tw/2;
+                pdf.text(t,tx,y);pdf.text(t,tx+0.05,y);pdf.text(t,tx,y+0.05);
+            }
+            for(let c=0;c<qrCols;c++){
+                const qd=[];
+                for(let r=0;r<rows;r++){const idx=r*cols+c;if(idx<its)qd.push(pageData.serialNumbers[idx]);}
+                if(qd.length>0){const qi=await createQRCodeImage(qd.join('\n'),200);if(qi){const x=ml+c*(cw/qrCols)+(cw/qrCols-qrSz)/2;pdf.addImage(qi,'PNG',x,qTop,qrSz,qrSz);}}
+            }
+        }
+
+        async function createPDF70x50_PSU(useSavePicker=false) {
+            const pn=document.getElementById('productName').value.trim(),md=document.getElementById('model').value.trim();
+            const sd=document.getElementById('cartonStatus');
+            if(!pn||!md){showStatus(sd,'Please enter Product Name and Model','error');return;}
+            if(serialNumberData.length===0){showStatus(sd,'Please upload a serial number list','error');return;}
+            if(loadedFiles.length>1){showStatus(sd,'Error: This function only accepts 1 file.','error');return;}
+            try {
+                const {jsPDF}=window.jspdf;
+                const pdf=new jsPDF('l','mm',[50,70]),pw=70,ph=50;
+                const now=new Date(),pdfn=now.toISOString().split('T')[0];
+                const MAX=10;
+                let allSNs=[];
+                for(const cd of serialNumberData) allSNs=allSNs.concat(cd.serialNumbers);
+                const tot=allSNs.length,nl=Math.ceil(tot/MAX);
+                const ctnMap={};
+                for(let ci=0;ci<nl;ci++){const cs=ci*MAX,ce=Math.min(cs+MAX,tot);ctnMap[ci+1]=ce-cs;}
+                const allLabels=[];
+                for(let li=0;li<nl;li++){
+                    const s=li*MAX,e=Math.min(s+MAX,tot),sns=allSNs.slice(s,e),cn=li+1;
+                    allLabels.push({title:`CTN ${cn} ${sns[0]} - ${sns[sns.length-1]}`,serialNumbers:sns,ctnNumber:cn,ctnTotalSerials:ctnMap[cn]});
+                }
+                for(let i=0;i<allLabels.length;i++){
+                    if(i>0) pdf.addPage();
+                    await createLabelContent70x50_PSU(pdf,{productName:pn,model:md,serialNumbers:allLabels[i].serialNumbers,cartonNo:allLabels[i].title,currentPage:i+1,totalPages:allLabels.length,ctnNumber:allLabels[i].ctnNumber,ctnTotalSerials:allLabels[i].ctnTotalSerials,fileName:''},pw,ph);
+                }
+                currentPDF=pdf; document.getElementById('printButton').disabled=false;
+                await savePDF(pdf,`${md}_QTY${tot}_${pdfn}_70x50mm_PSU.pdf`,useSavePicker,sd,`PDF ${allLabels.length} label(s) 70x50mm PSU created! ${tot} SNs, ${nl} CTN(s)`);
+            } catch(e){showStatus(document.getElementById('cartonStatus'),'Error: '+e.message,'error');}
+        }
+
+        async function createLabelContent70x50_PSU(pdf,pageData,pw,ph) {
+            const a1h=11,cw=66,ch=39,ml=(pw-cw)/2,ct=a1h,cols=2,rows=5,cellW=cw/cols;
+            const qrSz=16,qrCols=2,hdrH=4,btm=2,btp=2;
+            const bt=ct,hy=bt+btp,qBot=ct+ch-btm,qTop=qBot-qrSz,sTop=hy+hdrH+1,sBot=qTop-1,sH=sBot-sTop,cellH=(sH/rows)-0.1;
+            pdf.setDrawColor(0);pdf.setLineWidth(0.3);pdf.rect(ml,bt,cw,ch);
+            pdf.setFontSize(5);pdf.setFont(undefined,'bold');
+            pdf.text(pageData.productName,ml+1,hy+3);
+            const qSNs=pageData.serialNumbers.length,qTot=pageData.ctnTotalSerials||qSNs,cn=pageData.ctnNumber||'';
+            const ctxt=cn?`CTN ${cn}  QTY: ${qSNs}/${qTot}`:`QTY: ${qSNs}/${qTot}`,ctw=pdf.getTextWidth(ctxt);
+            pdf.text(ctxt,ml+(cw/2)-(ctw/2),hy+3);
+            const mtxt=`Model: ${pageData.model}`,mtw=pdf.getTextWidth(mtxt);
+            pdf.text(mtxt,ml+cw-mtw-1,hy+3);
+            pdf.setFont(undefined,'bold');pdf.setFontSize(4.5);
+            const its=Math.min(pageData.serialNumbers.length,10);
+            for(let i=0;i<its;i++){
+                const r=Math.floor(i/cols),c=i%cols,x=ml+c*cellW+(cellW/2),y=sTop+r*cellH+(cellH/2);
+                const t=pageData.serialNumbers[i],tw=pdf.getTextWidth(t),tx=x-tw/2;
+                pdf.text(t,tx,y);pdf.text(t,tx+0.05,y);pdf.text(t,tx,y+0.05);
+            }
+            for(let c=0;c<qrCols;c++){
+                const qd=[];
+                for(let r=0;r<rows;r++){const idx=r*cols+c;if(idx<its)qd.push(pageData.serialNumbers[idx]);}
+                if(qd.length>0){const qi=await createQRCodeImage(qd.join('\n'),200);if(qi){const x=ml+c*(cw/qrCols)+(cw/qrCols-qrSz)/2;pdf.addImage(qi,'PNG',x,qTop,qrSz,qrSz);}}
+            }
+        }
+
+        function printPDF() {
+            if(currentPDF){currentPDF.autoPrint();const u=URL.createObjectURL(currentPDF.output('blob'));const w=window.open(u);if(w)w.onload=()=>w.print();}
+        }
+
+        async function savePDF(pdf, filename, useSavePicker, statusDiv, successMsg) {
+            if(useSavePicker && supportsFileSystemAccess){
+                try {
+                    const handle=await window.showSaveFilePicker({suggestedName:filename,types:[{description:'PDF Files',accept:{'application/pdf':['.pdf']}}]});
+                    const wr=await handle.createWritable();
+                    await wr.write(pdf.output('blob')); await wr.close();
+                    showStatus(statusDiv, successMsg+' (Saved)', 'success');
+                } catch(err){
+                    if(err.name!=='AbortError'){pdf.save(filename);showStatus(statusDiv,successMsg+' (Downloaded)','success');}
+                    else showStatus(statusDiv,'Save cancelled','info');
+                }
+            } else { pdf.save(filename); showStatus(statusDiv, successMsg, 'success'); }
+        }
+
+        async function saveFileWithPicker(blob,suggestedName) {
+            try {
+                const h=await window.showSaveFilePicker({suggestedName,types:[{description:'Excel Files',accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]});
+                const w=await h.createWritable(); await w.write(blob); await w.close(); return true;
+            } catch(e){ return e.name!=='AbortError'?false:null; }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  NEW: Tạo list SN cho CTN — multi-column Excel
+        //  Row 1 (A1): Model
+        //  Row 2: CTN 01, CTN 02, ... (column headers, zero-padded)
+        //  Row 3+: Serial numbers, snPerCTN rows per column
+        // ═══════════════════════════════════════════════════════════════
+        async function generateSNForCTN(useSavePicker=false) {
+            const sd = document.getElementById('serialStatus');
+            const data = generateSerialNumbersList();
+            if (!data) { showStatus(sd, 'Vui lòng điền đầy đủ thông tin (Model, Series bắt đầu, Số lượng, Series/CTN)', 'error'); return; }
+
+            const { serialNumbers, model, snPerCTN, quantity, firstSN } = data;
+            const numCTNs = Math.ceil(quantity / snPerCTN);
+            // Zero-pad width for CTN label (e.g. 100 CTNs → "CTN 001")
+            const padLen  = String(numCTNs).length;
+
+            try {
+                // Build 2D array: rows × cols
+                // Row 0  → A1 = model, rest empty
+                // Row 1  → CTN headers
+                // Row 2+ → SN data
+
+                const totalRows = 2 + snPerCTN;  // header row + ctn-label row + max SN rows
+                // We'll build column-by-column then transpose
+
+                // Use AOA (array-of-arrays) in row-major order
+                // Dimensions: (2 + snPerCTN) rows × numCTNs cols
+                const aoa = [];
+
+                // Row 0: Model in A1
+                const row0 = new Array(numCTNs).fill('');
+                row0[0] = model;
+                aoa.push(row0);
+
+                // Row 1: CTN labels
+                const row1 = [];
+                for (let c = 0; c < numCTNs; c++) {
+                    row1.push('CTN ' + String(c + 1).padStart(padLen, '0'));
+                }
+                aoa.push(row1);
+
+                // Rows 2 … (2 + snPerCTN - 1): SN data
+                for (let r = 0; r < snPerCTN; r++) {
+                    const row = [];
+                    for (let c = 0; c < numCTNs; c++) {
+                        const idx = c * snPerCTN + r;
+                        row.push(idx < serialNumbers.length ? serialNumbers[idx] : '');
+                    }
+                    aoa.push(row);
+                }
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+                // Auto column width: measure longest value per col
+                const colWidths = [];
+                for (let c = 0; c < numCTNs; c++) {
+                    let maxLen = row1[c].length;
+                    for (let r = 0; r < snPerCTN; r++) {
+                        const idx = c * snPerCTN + r;
+                        if (idx < serialNumbers.length) maxLen = Math.max(maxLen, serialNumbers[idx].length);
+                    }
+                    colWidths.push({ wch: maxLen + 2 });
+                }
+                ws['!cols'] = colWidths;
+
+                XLSX.utils.book_append_sheet(wb, ws, 'SN by CTN');
+
+                const dt = new Date().toISOString().split('T')[0];
+                const fn = `${model}_${firstSN}_QTY${quantity}_${numCTNs}CTNs_${snPerCTN}SNperCTN_${dt}.xlsx`;
+
+                if (useSavePicker && supportsFileSystemAccess) {
+                    const blob = new Blob([XLSX.write(wb, {bookType:'xlsx', type:'array'})],
+                                         {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+                    const saved = await saveFileWithPicker(blob, fn);
+                    if (saved === true)   showStatus(sd, `Đã lưu! ${numCTNs} CTN × ${snPerCTN} SN/CTN = ${quantity} SN tổng`, 'success');
+                    else if (saved === null) showStatus(sd, 'Đã huỷ lưu', 'info');
+                    else { XLSX.writeFile(wb, fn); showStatus(sd, `Đã tải xuống! ${numCTNs} CTN × ${snPerCTN} SN/CTN`, 'success'); }
+                } else {
+                    XLSX.writeFile(wb, fn);
+                    showStatus(sd, `Hoàn thành! ${numCTNs} CTN × ${snPerCTN} SN/CTN = ${quantity} SN tổng`, 'success');
+                }
+            } catch(e) { showStatus(sd, 'Lỗi: ' + e.message, 'error'); }
+        }
+
+                async function generateSerialNumbers(useSavePicker=false) {
+            const sd=document.getElementById('serialStatus');
+            const data=generateSerialNumbersList();
+            if(!data){showStatus(sd,'Please fill in all fields correctly','error');return;}
+            try {
+                const wb=XLSX.utils.book_new(),sheetData=[[data.firstSN,`${data.model} ${data.quantity}`]];
+                for(const sn of data.serialNumbers) sheetData.push([sn]);
+                const ws=XLSX.utils.aoa_to_sheet(sheetData);
+                XLSX.utils.book_append_sheet(wb,ws,'Serial Numbers');
+                const dt=new Date().toISOString().split('T')[0];
+                const fn=`${data.model}_${data.firstSN}_QTY${data.quantity}_SNperCTN${data.snPerCTN}_${dt}.xlsx`;
+                if(useSavePicker&&supportsFileSystemAccess){
+                    const blob=new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+                    const saved=await saveFileWithPicker(blob,fn);
+                    if(saved===true) showStatus(sd,`Saved ${data.quantity} serial numbers!`,'success');
+                    else if(saved===null) showStatus(sd,'Save cancelled','info');
+                    else{XLSX.writeFile(wb,fn);showStatus(sd,`Generated ${data.quantity} serial numbers! (Downloaded)`,'success');}
+                } else { XLSX.writeFile(wb,fn); showStatus(sd,`Generated ${data.quantity} serial numbers!`,'success'); }
+                generatedSerialNumbers=data.serialNumbers;
+            } catch(e){showStatus(sd,'Error: '+e.message,'error');}
+        }
+
+        async function mixExcelFiles(useSavePicker=false) {
+            const f1=document.getElementById('file1'),f2=document.getElementById('file2'),sd=document.getElementById('mixStatus');
+            if(!f1.files[0]||!f2.files[0]){showStatus(sd,'Please select both Excel files','error');return;}
+            const r1=new FileReader(),r2=new FileReader();
+            r1.onload=function(e1){r2.onload=async function(e2){
+                try {
+                    const wb1=XLSX.read(e1.target.result,{type:'binary'}),wb2=XLSX.read(e2.target.result,{type:'binary'});
+                    const d1=XLSX.utils.sheet_to_json(wb1.Sheets[wb1.SheetNames[0]],{header:1,defval:''}),d2=XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]],{header:1,defval:''});
+                    const mixed=[]; const mr=Math.max(d1.length,d2.length);
+                    for(let i=0;i<mr;i++){
+                        if(i<d1.length&&d1[i].some(c=>c!=='')) mixed.push(d1[i]);
+                        if(i<d2.length&&d2[i].some(c=>c!=='')) mixed.push(d2[i]);
+                    }
+                    const nwb=XLSX.utils.book_new(),nws=XLSX.utils.aoa_to_sheet(mixed);
+                    XLSX.utils.book_append_sheet(nwb,nws,'Mixed Data');
+                    const fn='mixed_excel_file.xlsx';
+                    if(useSavePicker&&supportsFileSystemAccess){
+                        const blob=new Blob([XLSX.write(nwb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+                        const saved=await saveFileWithPicker(blob,fn);
+                        if(saved===true) showStatus(sd,'Files mixed and saved!','success');
+                        else if(saved===null) showStatus(sd,'Save cancelled','info');
+                        else{XLSX.writeFile(nwb,fn);showStatus(sd,'Files mixed! (Downloaded)','success');}
+                    } else {XLSX.writeFile(nwb,fn);showStatus(sd,'Files mixed successfully!','success');}
+                } catch(e){showStatus(sd,'Error: '+e.message,'error');}
+            };r2.readAsBinaryString(f2.files[0]);};
+            r1.readAsBinaryString(f1.files[0]);
+        }
+
+        function showStatus(div, msg, type) {
+            div.textContent=msg; div.className='status '+type; div.style.display='block';
+            if(type==='success'||type==='info') setTimeout(()=>div.style.display='none', 5000);
+        }
+    </script>
+</body>
+</html>
